@@ -17,6 +17,7 @@ DIRS_EXCLUDE = [
     ".git",
     "node_modules",
     "dist",
+    "dist-electron",
     "build",
     "captures_pantalla", # Carpeta d'imatges que no és necessària
     # Afegeix aquí altres directoris que vulguis ignorar, com '.vscode', '.idea', etc.

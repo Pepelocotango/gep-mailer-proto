@@ -1,11 +1,15 @@
 === PROJECTE CONCATENAT ===
 Projecte: gep-mailer-proto
 Branca: main
-Data: 2026-02-19 23:26:23
+Data: 2026-02-20 00:30:35
 ==================================================
 
 --- START: ../gep-mailer-proto/.gitignore -- branca main ---
 node_modules
+/dist
+/dist-electron
+*.log
+.DS_Store
 
 --- END: ../gep-mailer-proto/.gitignore -- branca main ---
 
@@ -37,11 +41,14 @@ prototip mails automatitzats per personal
   "name": "gep-mailer-proto",
   "private": true,
   "version": "0.0.0",
+  "description": "Nested Mailto RSVP system prototype for GEP",
+  "author": "GEP Development Team",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:linux": "npm run build && electron-builder --linux AppImage",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
@@ -64,7 +71,25 @@ prototip mails automatitzats per personal
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "wait-on": "^9.0.4"
+    "wait-on": "^9.0.4",
+    "electron-builder": "^24.13.3"
+  }
+  ,
+  "build": {
+    "appId": "com.gep.mailer.proto",
+    "productName": "GEPMailerProto",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    }
   }
 }
 
@@ -151,31 +176,53 @@ export default defineConfig({
 
 --- START: ../gep-mailer-proto/src/App.tsx -- branca main ---
 import { useState, useEffect } from 'react';
-import { generateMailtoLink } from './emailGenerator';
+import { generateMailtoLink, formatDateDMY } from './emailGenerator';
 import { Send, User, Calendar, Mail, Type } from 'lucide-react';
+
+interface WorkerProfile {
+  name: string;
+  email: string;
+}
 
 function App() {
   // 1. Estats buits per defecte (excepte el correu del manager que el guardem sempre)
   const [managerEmail, setManagerEmail] = useState(localStorage.getItem('gep_manager_email') || '');
   const [subject, setSubject] = useState('');
   const [eventName, setEventName] = useState('');
-  const [eventDate, setEventDate] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [workerName, setWorkerName] = useState('');
   const [workerEmail, setWorkerEmail] = useState('');
 
   // 2. Estats per la memòria (desplegables)
-  const [historyWorkers, setHistoryWorkers] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_workers') || '[]'));
+  const [historyProfiles, setHistoryProfiles] = useState<WorkerProfile[]>(JSON.parse(localStorage.getItem('gep_history_profiles') || '[]'));
   const [historyEvents, setHistoryEvents] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
-  const [historyEmails, setHistoryEmails] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_emails') || '[]'));
 
-  // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o la data
+  // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o les dates
   useEffect(() => {
-    if (eventName || eventDate) {
-      setSubject(`Disponibilitat: ${eventName} ${eventDate ? `(${eventDate})` : ''}`);
+    if (eventName || startDate) {
+      const startFmt = formatDateDMY(startDate);
+      const endFmt = formatDateDMY(endDate);
+      let datePart = startFmt;
+      if (endFmt && endFmt !== startFmt) {
+        datePart = `${startFmt} - ${endFmt}`;
+      }
+      setSubject(`Disponibilitat: ${eventName} ${datePart ? `(${datePart})` : ''}`);
     } else {
       setSubject('');
     }
-  }, [eventName, eventDate, setSubject]);
+  }, [eventName, startDate, endDate, setSubject]);
+
+  const handleWorkerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setWorkerName(newName);
+    
+    // Look for matching profile to auto-fill email
+    const matchingProfile = historyProfiles.find(p => p.name === newName);
+    if (matchingProfile) {
+      setWorkerEmail(matchingProfile.email);
+    }
+  };
 
   const handleSend = () => {
     if (!workerEmail || !managerEmail) {
@@ -183,30 +230,38 @@ function App() {
       return;
     }
 
-    // Guardem les dades actuals a la memòria (sense duplicats i màxim 10)
+    // Guardem les dades actuals a la memòria (perfils sense duplicats i màxim 15)
     localStorage.setItem('gep_manager_email', managerEmail);
     
-    if (workerName) {
-      const newWorkers = Array.from(new Set([workerName, ...historyWorkers])).slice(0, 10);
-      setHistoryWorkers(newWorkers);
-      localStorage.setItem('gep_history_workers', JSON.stringify(newWorkers));
+    if (workerName && workerEmail) {
+      const newProfile: WorkerProfile = { name: workerName, email: workerEmail };
+      const existingIndex = historyProfiles.findIndex(p => p.name === workerName);
+      
+      let updatedProfiles;
+      if (existingIndex !== -1) {
+        // Update existing profile
+        updatedProfiles = [...historyProfiles];
+        updatedProfiles[existingIndex] = newProfile;
+      } else {
+        // Add new profile to top
+        updatedProfiles = [newProfile, ...historyProfiles];
+      }
+      
+      // Limit to 15 profiles
+      const limitedProfiles = updatedProfiles.slice(0, 15);
+      setHistoryProfiles(limitedProfiles);
+      localStorage.setItem('gep_history_profiles', JSON.stringify(limitedProfiles));
     }
-    
+
     if (eventName) {
       const newEvents = Array.from(new Set([eventName, ...historyEvents])).slice(0, 10);
       setHistoryEvents(newEvents);
       localStorage.setItem('gep_history_events', JSON.stringify(newEvents));
     }
 
-    if (workerEmail) {
-      const newEmails = Array.from(new Set([workerEmail, ...historyEmails])).slice(0, 10);
-      setHistoryEmails(newEmails);
-      localStorage.setItem('gep_history_emails', JSON.stringify(newEmails));
-    }
-
     // Generar i obrir
-    const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, eventDate, subject);
-    window.open(link, '_blank');
+    const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, startDate, endDate, subject);
+    window.location.href = link;
   };
 
   return (
@@ -235,29 +290,41 @@ function App() {
 
           {/* Dades de l'Esdeveniment i Assumpte */}
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
+              <input 
+                type="text" 
+                list="events-list"
+                value={eventName} 
+                onChange={e => setEventName(e.target.value)}
+                placeholder="ex: Concert Festa Major"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              />
+              <datalist id="events-list">
+                {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
+              </datalist>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
-                <input 
-                  type="text" 
-                  list="events-list"
-                  value={eventName} 
-                  onChange={e => setEventName(e.target.value)}
-                  placeholder="ex: Concert Festa Major"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-                />
-                <datalist id="events-list">
-                  {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
-                </datalist>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data Inici</label>
                 <div className="relative">
                   <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                   <input 
                     type="date" 
-                    value={eventDate} 
-                    onChange={e => setEventDate(e.target.value)}
+                    value={startDate} 
+                    onChange={e => setStartDate(e.target.value)}
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data Fi</label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={e => setEndDate(e.target.value)}
                     className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
                   />
                 </div>
@@ -289,12 +356,12 @@ function App() {
                   type="text" 
                   list="workers-list"
                   value={workerName} 
-                  onChange={e => setWorkerName(e.target.value)}
+                  onChange={handleWorkerNameChange}
                   placeholder="ex: Joan Tècnic"
                   className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
                 />
                 <datalist id="workers-list">
-                  {historyWorkers.map((w, i) => <option key={i} value={w} />)}
+                  {historyProfiles.map((profile, i) => <option key={i} value={profile.name} />)}
                 </datalist>
               </div>
             </div>
@@ -302,15 +369,11 @@ function App() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
               <input 
                 type="email" 
-                list="emails-list"
                 value={workerEmail} 
                 onChange={e => setWorkerEmail(e.target.value)}
                 placeholder="ex: joan@gmail.com"
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
               />
-              <datalist id="emails-list">
-                {historyEmails.map((em, i) => <option key={i} value={em} />)}
-              </datalist>
             </div>
           </div>
 
@@ -332,28 +395,51 @@ export default App;
 --- END: ../gep-mailer-proto/src/App.tsx -- branca main ---
 
 --- START: ../gep-mailer-proto/src/emailGenerator.ts -- branca main ---
+export const formatDateDMY = (dateStr: string) => {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+};
+
 export const generateMailtoLink = (
   managerEmail: string,
   workerEmail: string,
   workerName: string,
   eventName: string,
-  eventDate: string,
-  customSubject: string // NOU: Assumpte personalitzat
+  startDate: string,
+  endDate: string,
+  customSubject: string
 ) => {
   const clean = (text: string) => encodeURIComponent(text);
 
+  // Helper to format date range
+  const formatDateRange = (start: string, end: string) => {
+    const startFmt = formatDateDMY(start);
+    const endFmt = formatDateDMY(end);
+    if (!endFmt || startFmt === endFmt) {
+      return startFmt;
+    }
+    return `${startFmt} fins al ${endFmt}`;
+  };
+
+  const dateRange = formatDateRange(startDate, endDate);
+
   // --- BOTONS DE RESPOSTA ---
   const subjectYes = `CONFIRMAT: ${eventName} - ${workerName}`;
-  const bodyYes = `Hola,\n\nConfirmo la meva assistència per a l'esdeveniment ${eventName} el dia ${eventDate}.\n\nSalutacions,\n${workerName}`;
+  const bodyYes = `Hola,\n\nConfirmo la meva assistència per a l'esdeveniment ${eventName} (${dateRange}).\n\nSalutacions,\n${workerName}`;
   const linkYes = `mailto:${managerEmail}?subject=${clean(subjectYes)}&body=${clean(bodyYes)}`;
 
   const subjectNo = `NO DISPONIBLE: ${eventName} - ${workerName}`;
-  const bodyNo = `Hola,\n\nEm sap greu, però no tinc disponibilitat per a l'esdeveniment ${eventName}.\n\nSalutacions,\n${workerName}`;
+  const bodyNo = `Hola,\n\nEm sap greu, però no tinc disponibilitat per a l'esdeveniment ${eventName} (${dateRange}).\n\nSalutacions,\n${workerName}`;
   const linkNo = `mailto:${managerEmail}?subject=${clean(subjectNo)}&body=${clean(bodyNo)}`;
 
   const subjectPending = `PENDENT: ${eventName} - ${workerName}`;
   const bodyPending = `Hola,\n\nEncara no ho sé segur. T'informaré el més aviat possible.\n\nSalutacions,\n${workerName}`;
   const linkPending = `mailto:${managerEmail}?subject=${clean(subjectPending)}&body=${clean(bodyPending)}`;
+
+  const subjectPartial = `DISPONIBILITAT PARCIAL: ${eventName} - ${workerName}`;
+  const bodyPartial = `Hola,\n\nPuc assistir a l'esdeveniment ${eventName}, però només els següents dies:\n\n\n\nSalutacions,\n${workerName}`;
+  const linkPartial = `mailto:${managerEmail}?subject=${clean(subjectPartial)}&body=${clean(bodyPartial)}`;
 
   // --- COS DEL MISSATGE PRINCIPAL ---
   const body = `
@@ -362,7 +448,7 @@ Hola ${workerName},
 Necessito saber la teva disponibilitat per a aquest esdeveniment:
 
 📅 ESDEVENIMENT: ${eventName}
-📆 DATA: ${eventDate}
+📆 DATA: ${dateRange}
 
 Si us plau, respon fent clic a un d'aquests enllaços:
 
@@ -371,6 +457,9 @@ ${linkYes}
 
 ❌ NO PUC:
 ${linkNo}
+
+🌗 NOMÉS ALGUNS DIES:
+${linkPartial}
 
 ⏳ ENCARA NO HO SÉ:
 ${linkPending}
@@ -423,8 +512,12 @@ const createWindow = () => {
     }
   });
 
-  // Load the Vite dev server URL
-  win.loadURL('http://localhost:5173');
+  // Load the appropriate URL based on environment
+  if (process.env.NODE_ENV === 'development') {
+    win.loadURL('http://localhost:5173');
+  } else {
+    win.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
 };
 
 app.whenReady().then(() => {
