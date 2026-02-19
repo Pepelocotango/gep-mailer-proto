@@ -84,7 +84,7 @@ function App() {
 
     // Generar i obrir
     const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, startDate, endDate, subject);
-    window.open(link, '_blank');
+    window.location.href = link;
   };
 
   return (
