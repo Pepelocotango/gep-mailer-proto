@@ -1,16 +1,59 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { generateMailtoLink } from './emailGenerator';
-import { Send, User, Calendar, Mail } from 'lucide-react';
+import { Send, User, Calendar, Mail, Type } from 'lucide-react';
 
 function App() {
-  const [managerEmail, setManagerEmail] = useState('elteu@email.com');
-  const [workerName, setWorkerName] = useState('Joan Tècnic');
-  const [workerEmail, setWorkerEmail] = useState('tecnic@email.com');
-  const [eventName, setEventName] = useState('Concert Festa Major');
-  const [eventDate, setEventDate] = useState('2026-08-15');
+  // 1. Estats buits per defecte (excepte el correu del manager que el guardem sempre)
+  const = useState(localStorage.getItem('gep_manager_email') || '');
+  const = useState('');
+  const = useState('');
+  const = useState('');
+  const = useState('');
+  const = useState('');
+
+  // 2. Estats per la memòria (desplegables)
+  const = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_workers') || '[]'));
+  const = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
+  const = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_emails') || '[]'));
+
+  // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o la data
+  useEffect(() => {
+    if (eventName || eventDate) {
+      setSubject(`Disponibilitat: ${eventName} ${eventDate ? `(${eventDate})` : ''}`);
+    } else {
+      setSubject('');
+    }
+  },);
 
   const handleSend = () => {
-    const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, eventDate);
+    if (!workerEmail || !managerEmail) {
+      alert("Cal omplir com a mínim el teu email i l'email del treballador.");
+      return;
+    }
+
+    // Guardem les dades actuals a la memòria (sense duplicats i màxim 10)
+    localStorage.setItem('gep_manager_email', managerEmail);
+    
+    if (workerName) {
+      const newWorkers = Array.from(new Set()).slice(0, 10);
+      setHistoryWorkers(newWorkers);
+      localStorage.setItem('gep_history_workers', JSON.stringify(newWorkers));
+    }
+    
+    if (eventName) {
+      const newEvents = Array.from(new Set()).slice(0, 10);
+      setHistoryEvents(newEvents);
+      localStorage.setItem('gep_history_events', JSON.stringify(newEvents));
+    }
+
+    if (workerEmail) {
+      const newEmails = Array.from(new Set()).slice(0, 10);
+      setHistoryEmails(newEmails);
+      localStorage.setItem('gep_history_emails', JSON.stringify(newEmails));
+    }
+
+    // Generar i obrir
+    const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, eventDate, subject);
     window.open(link, '_blank');
   };
 
@@ -23,59 +66,99 @@ function App() {
         </h1>
 
         <div className="space-y-4">
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-6">
-            <label className="block text-sm font-medium text-blue-800 mb-1">El teu Email (On rebràs les respostes)</label>
+          
+          {/* Dades del Manager */}
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+            <label className="block text-sm font-medium text-blue-800 mb-1">
+              El teu Email (Aquesta és l'adreça on t'arribaran les respostes)
+            </label>
             <input 
               type="email" 
               value={managerEmail} 
               onChange={e => setManagerEmail(e.target.value)}
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-white"
+              placeholder="ex: produccio@elteatre.cat"
+              className="w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Dades de l'Esdeveniment i Assumpte */}
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
+                <input 
+                  type="text" 
+                  list="events-list"
+                  value={eventName} 
+                  onChange={e => setEventName(e.target.value)}
+                  placeholder="ex: Concert Festa Major"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                />
+                <datalist id="events-list">
+                  {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
+                </datalist>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="date" 
+                    value={eventDate} 
+                    onChange={e => setEventDate(e.target.value)}
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assumpte del correu</label>
+              <div className="relative">
+                <Type className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                <input 
+                  type="text" 
+                  value={subject} 
+                  onChange={e => setSubject(e.target.value)}
+                  placeholder="Disponibilitat: ..."
+                  className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Dades del Treballador */}
+          <div className="grid grid-cols-2 gap-4 pt-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nom Treballador</label>
               <div className="relative">
                 <User className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                 <input 
                   type="text" 
+                  list="workers-list"
                   value={workerName} 
                   onChange={e => setWorkerName(e.target.value)}
-                  className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder="ex: Joan Tècnic"
+                  className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
                 />
+                <datalist id="workers-list">
+                  {historyWorkers.map((w, i) => <option key={i} value={w} />)}
+                </datalist>
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
               <input 
                 type="email" 
+                list="emails-list"
                 value={workerEmail} 
                 onChange={e => setWorkerEmail(e.target.value)}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                placeholder="ex: joan@gmail.com"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
               />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
-            <input 
-              type="text" 
-              value={eventName} 
-              onChange={e => setEventName(e.target.value)}
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
-            <div className="relative">
-              <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-              <input 
-                type="date" 
-                value={eventDate} 
-                onChange={e => setEventDate(e.target.value)}
-                className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              />
+              <datalist id="emails-list">
+                {historyEmails.map((em, i) => <option key={i} value={em} />)}
+              </datalist>
             </div>
           </div>
 
@@ -87,9 +170,6 @@ function App() {
             Generar i Obrir Correu
           </button>
 
-          <p className="text-xs text-gray-500 text-center mt-4">
-            Això obrirà el teu client de correu predeterminat amb l'esborrany llest per enviar.
-          </p>
         </div>
       </div>
     </div>
