@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
 import { Send, User, Calendar, Mail, Type } from 'lucide-react';
 
+interface WorkerProfile {
+  name: string;
+  email: string;
+}
+
 function App() {
   // 1. Estats buits per defecte (excepte el correu del manager que el guardem sempre)
   const [managerEmail, setManagerEmail] = useState(localStorage.getItem('gep_manager_email') || '');
@@ -13,9 +18,8 @@ function App() {
   const [workerEmail, setWorkerEmail] = useState('');
 
   // 2. Estats per la memòria (desplegables)
-  const [historyWorkers, setHistoryWorkers] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_workers') || '[]'));
+  const [historyProfiles, setHistoryProfiles] = useState<WorkerProfile[]>(JSON.parse(localStorage.getItem('gep_history_profiles') || '[]'));
   const [historyEvents, setHistoryEvents] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
-  const [historyEmails, setHistoryEmails] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_emails') || '[]'));
 
   // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o les dates
   useEffect(() => {
@@ -32,31 +36,50 @@ function App() {
     }
   }, [eventName, startDate, endDate, setSubject]);
 
+  const handleWorkerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setWorkerName(newName);
+    
+    // Look for matching profile to auto-fill email
+    const matchingProfile = historyProfiles.find(p => p.name === newName);
+    if (matchingProfile) {
+      setWorkerEmail(matchingProfile.email);
+    }
+  };
+
   const handleSend = () => {
     if (!workerEmail || !managerEmail) {
       alert("Cal omplir com a mínim el teu email i l'email del treballador.");
       return;
     }
 
-    // Guardem les dades actuals a la memòria (sense duplicats i màxim 10)
+    // Guardem les dades actuals a la memòria (perfils sense duplicats i màxim 15)
     localStorage.setItem('gep_manager_email', managerEmail);
     
-    if (workerName) {
-      const newWorkers = Array.from(new Set([workerName, ...historyWorkers])).slice(0, 10);
-      setHistoryWorkers(newWorkers);
-      localStorage.setItem('gep_history_workers', JSON.stringify(newWorkers));
+    if (workerName && workerEmail) {
+      const newProfile: WorkerProfile = { name: workerName, email: workerEmail };
+      const existingIndex = historyProfiles.findIndex(p => p.name === workerName);
+      
+      let updatedProfiles;
+      if (existingIndex !== -1) {
+        // Update existing profile
+        updatedProfiles = [...historyProfiles];
+        updatedProfiles[existingIndex] = newProfile;
+      } else {
+        // Add new profile to top
+        updatedProfiles = [newProfile, ...historyProfiles];
+      }
+      
+      // Limit to 15 profiles
+      const limitedProfiles = updatedProfiles.slice(0, 15);
+      setHistoryProfiles(limitedProfiles);
+      localStorage.setItem('gep_history_profiles', JSON.stringify(limitedProfiles));
     }
-    
+
     if (eventName) {
       const newEvents = Array.from(new Set([eventName, ...historyEvents])).slice(0, 10);
       setHistoryEvents(newEvents);
       localStorage.setItem('gep_history_events', JSON.stringify(newEvents));
-    }
-
-    if (workerEmail) {
-      const newEmails = Array.from(new Set([workerEmail, ...historyEmails])).slice(0, 10);
-      setHistoryEmails(newEmails);
-      localStorage.setItem('gep_history_emails', JSON.stringify(newEmails));
     }
 
     // Generar i obrir
@@ -156,12 +179,12 @@ function App() {
                   type="text" 
                   list="workers-list"
                   value={workerName} 
-                  onChange={e => setWorkerName(e.target.value)}
+                  onChange={handleWorkerNameChange}
                   placeholder="ex: Joan Tècnic"
                   className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
                 />
                 <datalist id="workers-list">
-                  {historyWorkers.map((w, i) => <option key={i} value={w} />)}
+                  {historyProfiles.map((profile, i) => <option key={i} value={profile.name} />)}
                 </datalist>
               </div>
             </div>
@@ -169,15 +192,11 @@ function App() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
               <input 
                 type="email" 
-                list="emails-list"
                 value={workerEmail} 
                 onChange={e => setWorkerEmail(e.target.value)}
                 placeholder="ex: joan@gmail.com"
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
               />
-              <datalist id="emails-list">
-                {historyEmails.map((em, i) => <option key={i} value={em} />)}
-              </datalist>
             </div>
           </div>
 
