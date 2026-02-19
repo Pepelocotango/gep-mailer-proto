@@ -2,11 +2,14 @@
   "name": "gep-mailer-proto",
   "private": true,
   "version": "0.0.0",
+  "description": "Nested Mailto RSVP system prototype for GEP",
+  "author": "GEP Development Team",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:linux": "npm run build && electron-builder --linux AppImage",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
@@ -29,6 +32,24 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "wait-on": "^9.0.4"
+    "wait-on": "^9.0.4",
+    "electron-builder": "^24.13.3"
+  }
+  ,
+  "build": {
+    "appId": "com.gep.mailer.proto",
+    "productName": "GEPMailerProto",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    }
   }
 }

@@ -11,8 +11,12 @@ const createWindow = () => {
     }
   });
 
-  // Load the Vite dev server URL
-  win.loadURL('http://localhost:5173');
+  // Load the appropriate URL based on environment
+  if (process.env.NODE_ENV === 'development') {
+    win.loadURL('http://localhost:5173');
+  } else {
+    win.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
 };
 
 app.whenReady().then(() => {
