@@ -4,17 +4,17 @@ import { Send, User, Calendar, Mail, Type } from 'lucide-react';
 
 function App() {
   // 1. Estats buits per defecte (excepte el correu del manager que el guardem sempre)
-  const = useState(localStorage.getItem('gep_manager_email') || '');
-  const = useState('');
-  const = useState('');
-  const = useState('');
-  const = useState('');
-  const = useState('');
+  const [managerEmail, setManagerEmail] = useState(localStorage.getItem('gep_manager_email') || '');
+  const [subject, setSubject] = useState('');
+  const [eventName, setEventName] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [workerName, setWorkerName] = useState('');
+  const [workerEmail, setWorkerEmail] = useState('');
 
   // 2. Estats per la memòria (desplegables)
-  const = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_workers') || '[]'));
-  const = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
-  const = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_emails') || '[]'));
+  const [historyWorkers, setHistoryWorkers] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_workers') || '[]'));
+  const [historyEvents, setHistoryEvents] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
+  const [historyEmails, setHistoryEmails] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_emails') || '[]'));
 
   // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o la data
   useEffect(() => {
@@ -23,7 +23,7 @@ function App() {
     } else {
       setSubject('');
     }
-  },);
+  }, [eventName, eventDate, setSubject]);
 
   const handleSend = () => {
     if (!workerEmail || !managerEmail) {
@@ -35,19 +35,19 @@ function App() {
     localStorage.setItem('gep_manager_email', managerEmail);
     
     if (workerName) {
-      const newWorkers = Array.from(new Set()).slice(0, 10);
+      const newWorkers = Array.from(new Set([workerName, ...historyWorkers])).slice(0, 10);
       setHistoryWorkers(newWorkers);
       localStorage.setItem('gep_history_workers', JSON.stringify(newWorkers));
     }
     
     if (eventName) {
-      const newEvents = Array.from(new Set()).slice(0, 10);
+      const newEvents = Array.from(new Set([eventName, ...historyEvents])).slice(0, 10);
       setHistoryEvents(newEvents);
       localStorage.setItem('gep_history_events', JSON.stringify(newEvents));
     }
 
     if (workerEmail) {
-      const newEmails = Array.from(new Set()).slice(0, 10);
+      const newEmails = Array.from(new Set([workerEmail, ...historyEmails])).slice(0, 10);
       setHistoryEmails(newEmails);
       localStorage.setItem('gep_history_emails', JSON.stringify(newEmails));
     }
