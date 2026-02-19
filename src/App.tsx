@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { generateMailtoLink } from './emailGenerator';
+import { generateMailtoLink, formatDateDMY } from './emailGenerator';
 import { Send, User, Calendar, Mail, Type } from 'lucide-react';
 
 function App() {
@@ -7,7 +7,8 @@ function App() {
   const [managerEmail, setManagerEmail] = useState(localStorage.getItem('gep_manager_email') || '');
   const [subject, setSubject] = useState('');
   const [eventName, setEventName] = useState('');
-  const [eventDate, setEventDate] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [workerName, setWorkerName] = useState('');
   const [workerEmail, setWorkerEmail] = useState('');
 
@@ -16,14 +17,20 @@ function App() {
   const [historyEvents, setHistoryEvents] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
   const [historyEmails, setHistoryEmails] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_emails') || '[]'));
 
-  // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o la data
+  // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o les dates
   useEffect(() => {
-    if (eventName || eventDate) {
-      setSubject(`Disponibilitat: ${eventName} ${eventDate ? `(${eventDate})` : ''}`);
+    if (eventName || startDate) {
+      const startFmt = formatDateDMY(startDate);
+      const endFmt = formatDateDMY(endDate);
+      let datePart = startFmt;
+      if (endFmt && endFmt !== startFmt) {
+        datePart = `${startFmt} - ${endFmt}`;
+      }
+      setSubject(`Disponibilitat: ${eventName} ${datePart ? `(${datePart})` : ''}`);
     } else {
       setSubject('');
     }
-  }, [eventName, eventDate, setSubject]);
+  }, [eventName, startDate, endDate, setSubject]);
 
   const handleSend = () => {
     if (!workerEmail || !managerEmail) {
@@ -53,7 +60,7 @@ function App() {
     }
 
     // Generar i obrir
-    const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, eventDate, subject);
+    const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, startDate, endDate, subject);
     window.open(link, '_blank');
   };
 
@@ -83,29 +90,41 @@ function App() {
 
           {/* Dades de l'Esdeveniment i Assumpte */}
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
+              <input 
+                type="text" 
+                list="events-list"
+                value={eventName} 
+                onChange={e => setEventName(e.target.value)}
+                placeholder="ex: Concert Festa Major"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              />
+              <datalist id="events-list">
+                {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
+              </datalist>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
-                <input 
-                  type="text" 
-                  list="events-list"
-                  value={eventName} 
-                  onChange={e => setEventName(e.target.value)}
-                  placeholder="ex: Concert Festa Major"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-                />
-                <datalist id="events-list">
-                  {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
-                </datalist>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data Inici</label>
                 <div className="relative">
                   <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                   <input 
                     type="date" 
-                    value={eventDate} 
-                    onChange={e => setEventDate(e.target.value)}
+                    value={startDate} 
+                    onChange={e => setStartDate(e.target.value)}
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data Fi</label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={e => setEndDate(e.target.value)}
                     className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
                   />
                 </div>

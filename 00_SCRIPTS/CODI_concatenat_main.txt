@@ -1,0 +1,442 @@
+=== PROJECTE CONCATENAT ===
+Projecte: gep-mailer-proto
+Branca: main
+Data: 2026-02-19 23:26:23
+==================================================
+
+--- START: ../gep-mailer-proto/.gitignore -- branca main ---
+node_modules
+
+--- END: ../gep-mailer-proto/.gitignore -- branca main ---
+
+--- START: ../gep-mailer-proto/README.md -- branca main ---
+# gep-mailer-proto
+prototip mails automatitzats per personal
+
+--- END: ../gep-mailer-proto/README.md -- branca main ---
+
+--- START: ../gep-mailer-proto/index.html -- branca main ---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GEP Mailer Proto</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+--- END: ../gep-mailer-proto/index.html -- branca main ---
+
+--- START: ../gep-mailer-proto/package.json -- branca main ---
+{
+  "name": "gep-mailer-proto",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
+    "start": "concurrently \"npm run dev\" \"npm run electron\""
+  },
+  "dependencies": {
+    "lucide-react": "^0.300.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "autoprefixer": "^10.4.24",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^40.6.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "wait-on": "^9.0.4"
+  }
+}
+
+--- END: ../gep-mailer-proto/package.json -- branca main ---
+
+--- START: ../gep-mailer-proto/postcss.config.js -- branca main ---
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+--- END: ../gep-mailer-proto/postcss.config.js -- branca main ---
+
+--- START: ../gep-mailer-proto/tailwind.config.js -- branca main ---
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins:[],
+}
+
+--- END: ../gep-mailer-proto/tailwind.config.js -- branca main ---
+
+--- START: ../gep-mailer-proto/tsconfig.json -- branca main ---
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+
+--- END: ../gep-mailer-proto/tsconfig.json -- branca main ---
+
+--- START: ../gep-mailer-proto/tsconfig.node.json -- branca main ---
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.js"]
+}
+
+--- END: ../gep-mailer-proto/tsconfig.node.json -- branca main ---
+
+--- START: ../gep-mailer-proto/vite.config.ts -- branca main ---
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+
+--- END: ../gep-mailer-proto/vite.config.ts -- branca main ---
+
+--- START: ../gep-mailer-proto/src/App.tsx -- branca main ---
+import { useState, useEffect } from 'react';
+import { generateMailtoLink } from './emailGenerator';
+import { Send, User, Calendar, Mail, Type } from 'lucide-react';
+
+function App() {
+  // 1. Estats buits per defecte (excepte el correu del manager que el guardem sempre)
+  const [managerEmail, setManagerEmail] = useState(localStorage.getItem('gep_manager_email') || '');
+  const [subject, setSubject] = useState('');
+  const [eventName, setEventName] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [workerName, setWorkerName] = useState('');
+  const [workerEmail, setWorkerEmail] = useState('');
+
+  // 2. Estats per la memòria (desplegables)
+  const [historyWorkers, setHistoryWorkers] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_workers') || '[]'));
+  const [historyEvents, setHistoryEvents] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
+  const [historyEmails, setHistoryEmails] = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_emails') || '[]'));
+
+  // 3. Auto-generar l'assumpte quan canvia el nom de l'esdeveniment o la data
+  useEffect(() => {
+    if (eventName || eventDate) {
+      setSubject(`Disponibilitat: ${eventName} ${eventDate ? `(${eventDate})` : ''}`);
+    } else {
+      setSubject('');
+    }
+  }, [eventName, eventDate, setSubject]);
+
+  const handleSend = () => {
+    if (!workerEmail || !managerEmail) {
+      alert("Cal omplir com a mínim el teu email i l'email del treballador.");
+      return;
+    }
+
+    // Guardem les dades actuals a la memòria (sense duplicats i màxim 10)
+    localStorage.setItem('gep_manager_email', managerEmail);
+    
+    if (workerName) {
+      const newWorkers = Array.from(new Set([workerName, ...historyWorkers])).slice(0, 10);
+      setHistoryWorkers(newWorkers);
+      localStorage.setItem('gep_history_workers', JSON.stringify(newWorkers));
+    }
+    
+    if (eventName) {
+      const newEvents = Array.from(new Set([eventName, ...historyEvents])).slice(0, 10);
+      setHistoryEvents(newEvents);
+      localStorage.setItem('gep_history_events', JSON.stringify(newEvents));
+    }
+
+    if (workerEmail) {
+      const newEmails = Array.from(new Set([workerEmail, ...historyEmails])).slice(0, 10);
+      setHistoryEmails(newEmails);
+      localStorage.setItem('gep_history_emails', JSON.stringify(newEmails));
+    }
+
+    // Generar i obrir
+    const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, eventDate, subject);
+    window.open(link, '_blank');
+  };
+
+  return (
+    <div className="min-h-screen p-8 flex flex-col items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg border border-gray-200">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+          <Mail className="w-6 h-6 text-blue-600" />
+          Prototip Mailer GEP
+        </h1>
+
+        <div className="space-y-4">
+          
+          {/* Dades del Manager */}
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+            <label className="block text-sm font-medium text-blue-800 mb-1">
+              El teu Email (Aquesta és l'adreça on t'arribaran les respostes)
+            </label>
+            <input 
+              type="email" 
+              value={managerEmail} 
+              onChange={e => setManagerEmail(e.target.value)}
+              placeholder="ex: produccio@elteatre.cat"
+              className="w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400"
+            />
+          </div>
+
+          {/* Dades de l'Esdeveniment i Assumpte */}
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
+                <input 
+                  type="text" 
+                  list="events-list"
+                  value={eventName} 
+                  onChange={e => setEventName(e.target.value)}
+                  placeholder="ex: Concert Festa Major"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                />
+                <datalist id="events-list">
+                  {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
+                </datalist>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="date" 
+                    value={eventDate} 
+                    onChange={e => setEventDate(e.target.value)}
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assumpte del correu</label>
+              <div className="relative">
+                <Type className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                <input 
+                  type="text" 
+                  value={subject} 
+                  onChange={e => setSubject(e.target.value)}
+                  placeholder="Disponibilitat: ..."
+                  className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Dades del Treballador */}
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nom Treballador</label>
+              <div className="relative">
+                <User className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                <input 
+                  type="text" 
+                  list="workers-list"
+                  value={workerName} 
+                  onChange={e => setWorkerName(e.target.value)}
+                  placeholder="ex: Joan Tècnic"
+                  className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                />
+                <datalist id="workers-list">
+                  {historyWorkers.map((w, i) => <option key={i} value={w} />)}
+                </datalist>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
+              <input 
+                type="email" 
+                list="emails-list"
+                value={workerEmail} 
+                onChange={e => setWorkerEmail(e.target.value)}
+                placeholder="ex: joan@gmail.com"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+              />
+              <datalist id="emails-list">
+                {historyEmails.map((em, i) => <option key={i} value={em} />)}
+              </datalist>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleSend}
+            className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md"
+          >
+            <Send className="w-5 h-5" />
+            Generar i Obrir Correu
+          </button>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+--- END: ../gep-mailer-proto/src/App.tsx -- branca main ---
+
+--- START: ../gep-mailer-proto/src/emailGenerator.ts -- branca main ---
+export const generateMailtoLink = (
+  managerEmail: string,
+  workerEmail: string,
+  workerName: string,
+  eventName: string,
+  eventDate: string,
+  customSubject: string // NOU: Assumpte personalitzat
+) => {
+  const clean = (text: string) => encodeURIComponent(text);
+
+  // --- BOTONS DE RESPOSTA ---
+  const subjectYes = `CONFIRMAT: ${eventName} - ${workerName}`;
+  const bodyYes = `Hola,\n\nConfirmo la meva assistència per a l'esdeveniment ${eventName} el dia ${eventDate}.\n\nSalutacions,\n${workerName}`;
+  const linkYes = `mailto:${managerEmail}?subject=${clean(subjectYes)}&body=${clean(bodyYes)}`;
+
+  const subjectNo = `NO DISPONIBLE: ${eventName} - ${workerName}`;
+  const bodyNo = `Hola,\n\nEm sap greu, però no tinc disponibilitat per a l'esdeveniment ${eventName}.\n\nSalutacions,\n${workerName}`;
+  const linkNo = `mailto:${managerEmail}?subject=${clean(subjectNo)}&body=${clean(bodyNo)}`;
+
+  const subjectPending = `PENDENT: ${eventName} - ${workerName}`;
+  const bodyPending = `Hola,\n\nEncara no ho sé segur. T'informaré el més aviat possible.\n\nSalutacions,\n${workerName}`;
+  const linkPending = `mailto:${managerEmail}?subject=${clean(subjectPending)}&body=${clean(bodyPending)}`;
+
+  // --- COS DEL MISSATGE PRINCIPAL ---
+  const body = `
+Hola ${workerName},
+
+Necessito saber la teva disponibilitat per a aquest esdeveniment:
+
+📅 ESDEVENIMENT: ${eventName}
+📆 DATA: ${eventDate}
+
+Si us plau, respon fent clic a un d'aquests enllaços:
+
+✅ SÍ, COMPTA AMB MI:
+${linkYes}
+
+❌ NO PUC:
+${linkNo}
+
+⏳ ENCARA NO HO SÉ:
+${linkPending}
+
+Gràcies!
+`.trim();
+
+  // Utilitzem l'assumpte personalitzat aquí
+  return `mailto:${workerEmail}?subject=${clean(customSubject)}&body=${clean(body)}`;
+};
+--- END: ../gep-mailer-proto/src/emailGenerator.ts -- branca main ---
+
+--- START: ../gep-mailer-proto/src/index.css -- branca main ---
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+--- END: ../gep-mailer-proto/src/index.css -- branca main ---
+
+--- START: ../gep-mailer-proto/src/main.tsx -- branca main ---
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+
+--- END: ../gep-mailer-proto/src/main.tsx -- branca main ---
+
+--- START: ../gep-mailer-proto/electron/main.js -- branca main ---
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
+
+const createWindow = () => {
+  const win = new BrowserWindow({
+    width: 900,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  // Load the Vite dev server URL
+  win.loadURL('http://localhost:5173');
+};
+
+app.whenReady().then(() => {
+  createWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+--- END: ../gep-mailer-proto/electron/main.js -- branca main ---
+
