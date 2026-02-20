@@ -18,8 +18,7 @@
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "start": "concurrently \"npm run dev\" \"npm run electron\"",
-    "start:clean": "rm -rf node_modules/.vite dist && npm start"
-  },
+    "start:clean": "pkill -x electron 2>/dev/null; pkill -x vite 2>/dev/null; sleep 1; rm -rf node_modules/.vite dist && npm start"  },
   "dependencies": {
     "lucide-react": "^0.300.0",
     "react": "^18.3.1",

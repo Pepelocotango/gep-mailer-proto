@@ -1,7 +1,7 @@
 === PROJECTE CONCATENAT ===
 Projecte: gep-mailer-proto
 Branca: main
-Data: 2026-02-20 14:12:00
+Data: 2026-02-20 14:59:29
 ==================================================
 
 --- START: ../gep-mailer-proto/.gitignore -- branca main ---
@@ -177,6 +177,7 @@ app.on('window-all-closed', () => {
   "main": "main.cjs",
   "scripts": {
     "dev": "vite",
+    "dev:clean": "rm -rf node_modules/.vite dist && npm run dev",
     "build": "tsc && vite build",
     "build:linux": "npm run build && cross-env BRANCH_NAME=local BUILD_NUMBER=dev electron-builder --linux",
     "build:win": "npm run build && cross-env BRANCH_NAME=local BUILD_NUMBER=dev electron-builder --win",
@@ -184,7 +185,8 @@ app.on('window-all-closed', () => {
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
-    "start": "concurrently \"npm run dev\" \"npm run electron\""
+    "start": "concurrently \"npm run dev\" \"npm run electron\"",
+    "start:clean": "rm -rf node_modules/.vite dist && npm start"
   },
   "dependencies": {
     "lucide-react": "^0.300.0",
@@ -407,7 +409,7 @@ jobs:
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
-import { Send, User, Calendar, Mail, Type, Upload, Search, Download } from 'lucide-react';
+import { Send, User, Calendar, Mail, Type, Upload, Search, Download, Phone, Save, Globe, FileText } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
 import { ImportModal } from './components/ImportModal';
 function App() {
@@ -419,6 +421,12 @@ function App() {
     const [endDate, setEndDate] = useState('');
     const [workerName, setWorkerName] = useState('');
     const [workerEmail, setWorkerEmail] = useState('');
+    const [workerRole, setWorkerRole] = useState('');
+    const [workerTel1, setWorkerTel1] = useState('');
+    const [workerTel2, setWorkerTel2] = useState('');
+    const [workerWeb, setWorkerWeb] = useState('');
+    const [workerNotes, setWorkerNotes] = useState('');
+    const [selectedContactId, setSelectedContactId] = useState(null);
     // 2. Estats per a contactes importats
     const [contacts, setContacts] = useState(JSON.parse(localStorage.getItem('gep_imported_contacts') || '[]'));
     const [contactSearch, setContactSearch] = useState('');
@@ -434,6 +442,11 @@ function App() {
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         const nameIndex = headers.findIndex(h => h.includes('name'));
         const emailIndex = headers.findIndex(h => h.includes('email'));
+        const roleIndex = headers.findIndex(h => h.includes('job') || h.includes('position') || h.includes('title') || h.includes('role'));
+        const tel1Index = headers.findIndex(h => h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('cell'));
+        const tel2Index = headers.findIndex((h, i) => i !== tel1Index && (h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('cell')));
+        const webIndex = headers.findIndex(h => h.includes('web') || h.includes('url') || h.includes('site'));
+        const notesIndex = headers.findIndex(h => h.includes('note') || h.includes('comment') || h.includes('description'));
         if (nameIndex === -1)
             return [];
         const contacts = [];
@@ -444,7 +457,11 @@ function App() {
                     id: `import-csv-${Math.random().toString(36).substr(2, 9)}`,
                     name: values[nameIndex],
                     email: emailIndex !== -1 ? values[emailIndex] : undefined,
-                    role: undefined
+                    role: roleIndex !== -1 ? values[roleIndex] : undefined,
+                    tel1: tel1Index !== -1 ? values[tel1Index] : undefined,
+                    tel2: tel2Index !== -1 ? values[tel2Index] : undefined,
+                    web: webIndex !== -1 ? values[webIndex] : undefined,
+                    notes: notesIndex !== -1 ? values[notesIndex] : undefined
                 });
             }
         }
@@ -457,12 +474,22 @@ function App() {
         vcardBlocks.forEach(block => {
             const nameMatch = block.match(/^FN:(.+)$/m);
             const emailMatch = block.match(/^EMAIL.*:(.+)$/m);
+            const roleMatch = block.match(/^TITLE:(.+)$/m);
+            const telMatches = block.match(/^TEL.*:(.+)$/gm);
+            const webMatch = block.match(/^URL:(.+)$/m);
+            const notesMatch = block.match(/^NOTE:(.+)$/m);
             if (nameMatch) {
+                const tel1 = telMatches && telMatches.length > 0 ? telMatches[0].split(':')[1].trim() : undefined;
+                const tel2 = telMatches && telMatches.length > 1 ? telMatches[1].split(':')[1].trim() : undefined;
                 contacts.push({
                     id: `import-vcf-${Math.random().toString(36).substr(2, 9)}`,
                     name: nameMatch[1].trim(),
                     email: emailMatch ? emailMatch[1].trim() : undefined,
-                    role: undefined
+                    role: roleMatch ? roleMatch[1].trim() : undefined,
+                    tel1: tel1,
+                    tel2: tel2,
+                    web: webMatch ? webMatch[1].trim() : undefined,
+                    notes: notesMatch ? notesMatch[1].trim() : undefined
                 });
             }
         });
@@ -574,8 +601,14 @@ function App() {
     };
     // Funció per seleccionar un contacte
     const handleSelectContact = (person) => {
+        setSelectedContactId(person.id);
         setWorkerName(person.name);
         setWorkerEmail(person.email || '');
+        setWorkerRole(person.role || '');
+        setWorkerTel1(person.tel1 || '');
+        setWorkerTel2(person.tel2 || '');
+        setWorkerWeb(person.web || '');
+        setWorkerNotes(person.notes || '');
     };
     // Filtrar contactes per nom o rol
     const filteredContacts = contacts.filter(contact => contact.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
@@ -606,6 +639,63 @@ function App() {
         if (matchingProfile) {
             setWorkerEmail(matchingProfile.email);
         }
+    };
+    // Funció per netejar el formulari
+    const handleClearForm = () => {
+        setSelectedContactId(null);
+        setWorkerName('');
+        setWorkerEmail('');
+        setWorkerRole('');
+        setWorkerTel1('');
+        setWorkerTel2('');
+        setWorkerWeb('');
+        setWorkerNotes('');
+    };
+    // Funció per guardar/actualitzar contacte
+    const handleUpdateContact = () => {
+        if (!workerName.trim()) {
+            alert('El nom del contacte és obligatori');
+            return;
+        }
+        let updatedContacts;
+        if (selectedContactId) {
+            // Actualitzar contacte existent
+            updatedContacts = contacts.map(contact => contact.id === selectedContactId
+                ? {
+                    ...contact,
+                    name: workerName,
+                    email: workerEmail || undefined,
+                    role: workerRole || undefined,
+                    tel1: workerTel1 || undefined,
+                    tel2: workerTel2 || undefined,
+                    web: workerWeb || undefined,
+                    notes: workerNotes || undefined
+                }
+                : contact);
+        }
+        else {
+            // Crear nou contacte
+            const newContact = {
+                id: `manual-${Math.random().toString(36).substr(2, 9)}`,
+                name: workerName,
+                email: workerEmail || undefined,
+                role: workerRole || undefined,
+                tel1: workerTel1 || undefined,
+                tel2: workerTel2 || undefined,
+                web: workerWeb || undefined,
+                notes: workerNotes || undefined
+            };
+            updatedContacts = [...contacts, newContact];
+            setSelectedContactId(newContact.id);
+        }
+        setContacts(updatedContacts);
+        localStorage.setItem('gep_imported_contacts', JSON.stringify(updatedContacts));
+        // Mostrar feedback visual
+        const feedback = document.createElement('div');
+        feedback.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        feedback.textContent = 'Contacte actualitzat';
+        document.body.appendChild(feedback);
+        setTimeout(() => document.body.removeChild(feedback), 2000);
     };
     const handleSend = () => {
         if (!workerEmail || !managerEmail) {
@@ -641,7 +731,9 @@ function App() {
         const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, startDate, endDate, subject);
         window.location.href = link;
     };
-    return (_jsxs("div", { className: "flex h-screen bg-gray-100 p-4 gap-4", children: [_jsxs("div", { className: "flex-1 bg-white p-6 rounded-xl shadow-lg overflow-y-auto", children: [_jsxs("h1", { className: "text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2", children: [_jsx(Mail, { className: "w-6 h-6 text-blue-600" }), "Prototip Mailer GEP"] }), _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4", children: [_jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("label", { className: "block text-sm font-medium text-blue-800 mb-1", children: "El teu Email (Aquesta \u00E9s l'adre\u00E7a on t'arribaran les respostes)" }) }), _jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("input", { type: "email", value: managerEmail, onChange: e => setManagerEmail(e.target.value), placeholder: "ex: produccio@elteatre.cat", className: "w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400" }) })] }), _jsxs("div", { className: "p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Esdeveniment" }) }), _jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("input", { type: "text", list: "events-list", value: eventName, onChange: e => setEventName(e.target.value), placeholder: "ex: Concert Festa Major", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) }), _jsx("datalist", { id: "events-list", children: historyEvents.map((ev, i) => _jsx("option", { value: ev }, i)) })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Inici" }) }), _jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: startDate, onChange: e => setStartDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Fi" }) }), _jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: endDate, onChange: e => setEndDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Assumpte del correu" }) }), _jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsxs("div", { className: "relative", children: [_jsx(Type, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: subject, onChange: e => setSubject(e.target.value), placeholder: "Disponibilitat: ...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium" })] }) })] })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4 pt-2", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Nom Treballador" }) }), _jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsxs("div", { className: "relative", children: [_jsx(User, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", list: "workers-list", value: workerName, onChange: handleWorkerNameChange, placeholder: "ex: Joan T\u00E8cnic", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }) }), _jsx("datalist", { id: "workers-list", children: historyProfiles.map((profile, i) => _jsx("option", { value: profile.name }, i)) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Email Treballador" }) }), _jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("input", { type: "email", value: workerEmail, onChange: e => setWorkerEmail(e.target.value), placeholder: "ex: joan@gmail.com", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) })] })] }), _jsx(Tooltip, { text: "Crea l'esborrany i obre el teu gestor de correu predeterminat", children: _jsxs("button", { onClick: handleSend, className: "w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md", children: [_jsx(Send, { className: "w-5 h-5" }), "Generar i Obrir Correu"] }) })] })] }), _jsxs("div", { className: "w-80 bg-white p-4 rounded-xl shadow-lg flex flex-col", children: [_jsx("input", { type: "file", ref: fileInputRef, onChange: handleImportContacts, accept: ".json,.gep,.csv,.vcf", className: "hidden" }), _jsx(Tooltip, { text: "Importar des de .gep, .json, .csv o .vcf", children: _jsxs("button", { onClick: () => fileInputRef.current?.click(), className: "w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Upload, { className: "w-4 h-4" }), "Importar Contactes"] }) }), _jsx(Tooltip, { text: "Guardar llista actual compatible amb GEP", children: _jsxs("button", { onClick: handleExportContacts, className: "w-full mb-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Download, { className: "w-4 h-4" }), "Exportar .GEP"] }) }), _jsxs("div", { className: "relative mb-4", children: [_jsx(Search, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: contactSearch, onChange: e => setContactSearch(e.target.value), placeholder: "Buscar contactes...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }), _jsxs("div", { className: "flex-1 overflow-y-auto space-y-2", children: [filteredContacts.map((contact) => (_jsxs("button", { onClick: () => handleSelectContact(contact), className: "w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors", children: [_jsx("div", { className: "font-medium text-gray-800", children: contact.name }), contact.role && (_jsx("div", { className: "text-sm text-gray-500", children: contact.role })), contact.email && (_jsx("div", { className: "text-sm text-blue-600 truncate", children: contact.email }))] }, contact.id))), filteredContacts.length === 0 && (_jsx("div", { className: "text-center text-gray-500 py-8", children: contacts.length === 0
+    return (_jsxs("div", { className: "flex h-screen bg-gray-100 p-4 gap-4", children: [_jsxs("div", { className: "flex-1 bg-white p-6 rounded-xl shadow-lg overflow-y-auto", children: [_jsxs("h1", { className: "text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2", children: [_jsx(Mail, { className: "w-6 h-6 text-blue-600" }), "Prototip Mailer GEP"] }), _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4", children: [_jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("label", { className: "block text-sm font-medium text-blue-800 mb-1", children: "El teu Email (Aquesta \u00E9s l'adre\u00E7a on t'arribaran les respostes)" }) }), _jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("input", { type: "email", value: managerEmail, onChange: e => setManagerEmail(e.target.value), placeholder: "ex: produccio@elteatre.cat", className: "w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400" }) })] }), _jsxs("div", { className: "p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Esdeveniment" }) }), _jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("input", { type: "text", list: "events-list", value: eventName, onChange: e => setEventName(e.target.value), placeholder: "ex: Concert Festa Major", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) }), _jsx("datalist", { id: "events-list", children: historyEvents.map((ev, i) => _jsx("option", { value: ev }, i)) })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Inici" }) }), _jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: startDate, onChange: e => setStartDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Fi" }) }), _jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: endDate, onChange: e => setEndDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Assumpte del correu" }) }), _jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsxs("div", { className: "relative", children: [_jsx(Type, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: subject, onChange: e => setSubject(e.target.value), placeholder: "Disponibilitat: ...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium" })] }) })] })] }), _jsxs("div", { className: "space-y-4 pt-2", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Nom Treballador" }) }), _jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsxs("div", { className: "relative", children: [_jsx(User, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", list: "workers-list", value: workerName, onChange: handleWorkerNameChange, placeholder: "ex: Joan T\u00E8cnic", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }) }), _jsx("datalist", { id: "workers-list", children: historyProfiles.map((profile, i) => _jsx("option", { value: profile.name }, i)) })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Rol o c\u00E0rrec del treballador", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Rol" }) }), _jsx(Tooltip, { text: "Rol o c\u00E0rrec del treballador", children: _jsx("input", { type: "text", value: workerRole, onChange: e => setWorkerRole(e.target.value), placeholder: "ex: T\u00E8cnic de so", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Email Treballador" }) }), _jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("input", { type: "email", value: workerEmail, onChange: e => setWorkerEmail(e.target.value), placeholder: "ex: joan@gmail.com", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) })] })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Tel\u00E8fon principal del contacte", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Tel\u00E8fon 1" }) }), _jsx(Tooltip, { text: "Tel\u00E8fon principal del contacte", children: _jsxs("div", { className: "relative", children: [_jsx(Phone, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "tel", value: workerTel1, onChange: e => setWorkerTel1(e.target.value), placeholder: "ex: 600123456", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "Tel\u00E8fon secundari del contacte", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Tel\u00E8fon 2" }) }), _jsx(Tooltip, { text: "Tel\u00E8fon secundari del contacte", children: _jsxs("div", { className: "relative", children: [_jsx(Phone, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "tel", value: workerTel2, onChange: e => setWorkerTel2(e.target.value), placeholder: "ex: 931234567", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }) })] })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "P\u00E0gina web o perfil professional", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Web" }) }), _jsx(Tooltip, { text: "P\u00E0gina web o perfil professional", children: _jsxs("div", { className: "relative", children: [_jsx(Globe, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "url", value: workerWeb, onChange: e => setWorkerWeb(e.target.value), placeholder: "ex: https://joantecnic.cat", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "Notes addicionals sobre el contacte", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Notes" }) }), _jsx(Tooltip, { text: "Notes addicionals sobre el contacte", children: _jsxs("div", { className: "relative", children: [_jsx(FileText, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("textarea", { value: workerNotes, onChange: e => setWorkerNotes(e.target.value), placeholder: "Notes addicionals...", rows: 3, className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 resize-none" })] }) })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsx(Tooltip, { text: "Guarda o actualitza aquest contacte a la teva llista local", className: "w-full", children: _jsxs("button", { onClick: handleUpdateContact, className: "w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Save, { className: "w-4 h-4" }), "Guardar a la llista"] }) }), _jsx(Tooltip, { text: "Buida els camps per crear o buscar un nou contacte", className: "w-full", children: _jsxs("button", { onClick: handleClearForm, className: "w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(User, { className: "w-4 h-4" }), "Netejar Formulari"] }) })] })] }), _jsx(Tooltip, { text: "Crea l'esborrany i obre el teu gestor de correu predeterminat", children: _jsxs("button", { onClick: handleSend, className: "w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md", children: [_jsx(Send, { className: "w-5 h-5" }), "Generar i Obrir Correu"] }) })] })] }), _jsxs("div", { className: "w-80 bg-white p-4 rounded-xl shadow-lg flex flex-col", children: [_jsx("input", { type: "file", ref: fileInputRef, onChange: handleImportContacts, accept: ".json,.gep,.csv,.vcf", className: "hidden" }), _jsx(Tooltip, { text: "Importar des de .gep, .json, .csv o .vcf", children: _jsxs("button", { onClick: () => fileInputRef.current?.click(), className: "w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Upload, { className: "w-4 h-4" }), "Importar Contactes"] }) }), _jsx(Tooltip, { text: "Guardar llista actual compatible amb GEP", children: _jsxs("button", { onClick: handleExportContacts, className: "w-full mb-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Download, { className: "w-4 h-4" }), "Exportar .GEP"] }) }), _jsxs("div", { className: "relative mb-4", children: [_jsx(Search, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: contactSearch, onChange: e => setContactSearch(e.target.value), placeholder: "Buscar contactes...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }), _jsxs("div", { className: "flex-1 overflow-y-auto space-y-2", children: [filteredContacts.map((contact) => (_jsxs("button", { onClick: () => handleSelectContact(contact), className: `w-full text-left p-3 rounded-lg border transition-colors ${selectedContactId === contact.id
+                                    ? 'bg-blue-100 border-blue-400'
+                                    : 'border-gray-200 hover:bg-blue-50 hover:border-blue-300'}`, children: [_jsx("div", { className: "font-medium text-gray-800", children: contact.name }), contact.role && (_jsx("div", { className: "text-sm text-gray-500 italic", children: contact.role })), contact.email && (_jsxs("div", { className: "flex items-center gap-1 text-sm text-blue-600 truncate", children: [_jsx(Mail, { className: "w-3 h-3" }), contact.email] })), contact.tel1 && (_jsxs("div", { className: "flex items-center gap-1 text-xs text-gray-500 mt-1", children: [_jsx(Phone, { className: "w-3 h-3" }), contact.tel1] }))] }, contact.id))), filteredContacts.length === 0 && (_jsx("div", { className: "text-center text-gray-500 py-8", children: contacts.length === 0
                                     ? "No hi ha contactes importats. Importa un fitxer JSON."
                                     : "No s'han trobat contactes amb aquesta cerca." }))] })] }), _jsx(ImportModal, { isOpen: isImportModalOpen, onClose: closeImportModal, onMerge: confirmMerge, onReplace: confirmReplace, newContactCount: pendingContacts.length })] }));
 }
@@ -1277,20 +1369,30 @@ function App() {
 
             {/* Action Row */}
             <div className="grid grid-cols-2 gap-4">
-              <button 
-                onClick={handleUpdateContact}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              <Tooltip 
+                text="Guarda o actualitza aquest contacte a la teva llista local" 
+                className="w-full"
               >
-                <Save className="w-4 h-4" />
-                Guardar a la llista
-              </button>
-              <button 
-                onClick={handleClearForm}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                <button 
+                  onClick={handleUpdateContact}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  Guardar a la llista
+                </button>
+              </Tooltip>
+              <Tooltip 
+                text="Buida els camps per crear o buscar un nou contacte" 
+                className="w-full"
               >
-                <User className="w-4 h-4" />
-                Netejar Formulari
-              </button>
+                <button 
+                  onClick={handleClearForm}
+                  className="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  Netejar Formulari
+                </button>
+              </Tooltip>
             </div>
           </div>
 
@@ -1699,9 +1801,9 @@ export function ImportModal({ isOpen, onClose, onMerge, onReplace, newContactCou
 --- START: ../gep-mailer-proto/src/components/Tooltip.js -- branca main ---
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState } from 'react';
-export const Tooltip = ({ text, children }) => {
+export const Tooltip = ({ text, children, className = "" }) => {
     const [isVisible, setIsVisible] = useState(false);
-    return (_jsxs("div", { className: "relative flex items-center", onMouseEnter: () => setIsVisible(true), onMouseLeave: () => setIsVisible(false), children: [children, isVisible && (_jsxs("div", { className: "absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max max-w-xs px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg z-50 pointer-events-none", children: [text, _jsx("div", { className: "absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" })] }))] }));
+    return (_jsxs("div", { className: `relative ${className}`, onMouseEnter: () => setIsVisible(true), onMouseLeave: () => setIsVisible(false), children: [children, isVisible && (_jsxs("div", { className: "absolute z-[10000] bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-sm rounded shadow-lg whitespace-nowrap", children: [text, _jsx("div", { className: "absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black" })] }))] }));
 };
 
 --- END: ../gep-mailer-proto/src/components/Tooltip.js -- branca main ---
@@ -1712,22 +1814,23 @@ import React, { useState } from 'react';
 interface TooltipProps {
   text: string;
   children: React.ReactNode;
+  className?: string; // Add this
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ text, children }) => {
+export const Tooltip: React.FC<TooltipProps> = ({ text, children, className = "" }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
     <div 
-      className="relative flex items-center"
+      className={`relative ${className}`}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
     >
       {children}
       {isVisible && (
-        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max max-w-xs px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg z-50 pointer-events-none">
+        <div className="absolute z-[10000] bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-sm rounded shadow-lg whitespace-nowrap">
           {text}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
         </div>
       )}
     </div>
