@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
-import { Send, User, Calendar, Mail, Type, Upload, Search, Download } from 'lucide-react';
+import { Send, User, Calendar, Mail, Type, Upload, Search, Download, Phone, Save, Globe, FileText } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
 import { ImportModal } from './components/ImportModal';
 
@@ -12,8 +12,12 @@ interface WorkerProfile {
 interface PersonGroup {
   id: string;
   name: string;
-  email?: string;
   role?: string;
+  email?: string;
+  tel1?: string;
+  tel2?: string;
+  web?: string;
+  notes?: string;
 }
 
 function App() {
@@ -25,6 +29,12 @@ function App() {
   const [endDate, setEndDate] = useState('');
   const [workerName, setWorkerName] = useState('');
   const [workerEmail, setWorkerEmail] = useState('');
+  const [workerRole, setWorkerRole] = useState('');
+  const [workerTel1, setWorkerTel1] = useState('');
+  const [workerTel2, setWorkerTel2] = useState('');
+  const [workerWeb, setWorkerWeb] = useState('');
+  const [workerNotes, setWorkerNotes] = useState('');
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   
   // 2. Estats per a contactes importats
   const [contacts, setContacts] = useState<PersonGroup[]>(JSON.parse(localStorage.getItem('gep_imported_contacts') || '[]'));
@@ -43,6 +53,11 @@ function App() {
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     const nameIndex = headers.findIndex(h => h.includes('name'));
     const emailIndex = headers.findIndex(h => h.includes('email'));
+    const roleIndex = headers.findIndex(h => h.includes('job') || h.includes('position') || h.includes('title') || h.includes('role'));
+    const tel1Index = headers.findIndex(h => h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('cell'));
+    const tel2Index = headers.findIndex((h, i) => i !== tel1Index && (h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('cell')));
+    const webIndex = headers.findIndex(h => h.includes('web') || h.includes('url') || h.includes('site'));
+    const notesIndex = headers.findIndex(h => h.includes('note') || h.includes('comment') || h.includes('description'));
     
     if (nameIndex === -1) return [];
     
@@ -54,7 +69,11 @@ function App() {
           id: `import-csv-${Math.random().toString(36).substr(2, 9)}`,
           name: values[nameIndex],
           email: emailIndex !== -1 ? values[emailIndex] : undefined,
-          role: undefined
+          role: roleIndex !== -1 ? values[roleIndex] : undefined,
+          tel1: tel1Index !== -1 ? values[tel1Index] : undefined,
+          tel2: tel2Index !== -1 ? values[tel2Index] : undefined,
+          web: webIndex !== -1 ? values[webIndex] : undefined,
+          notes: notesIndex !== -1 ? values[notesIndex] : undefined
         });
       }
     }
@@ -70,13 +89,24 @@ function App() {
     vcardBlocks.forEach(block => {
       const nameMatch = block.match(/^FN:(.+)$/m);
       const emailMatch = block.match(/^EMAIL.*:(.+)$/m);
+      const roleMatch = block.match(/^TITLE:(.+)$/m);
+      const telMatches = block.match(/^TEL.*:(.+)$/gm);
+      const webMatch = block.match(/^URL:(.+)$/m);
+      const notesMatch = block.match(/^NOTE:(.+)$/m);
       
       if (nameMatch) {
+        const tel1 = telMatches && telMatches.length > 0 ? telMatches[0].split(':')[1].trim() : undefined;
+        const tel2 = telMatches && telMatches.length > 1 ? telMatches[1].split(':')[1].trim() : undefined;
+        
         contacts.push({
           id: `import-vcf-${Math.random().toString(36).substr(2, 9)}`,
           name: nameMatch[1].trim(),
           email: emailMatch ? emailMatch[1].trim() : undefined,
-          role: undefined
+          role: roleMatch ? roleMatch[1].trim() : undefined,
+          tel1: tel1,
+          tel2: tel2,
+          web: webMatch ? webMatch[1].trim() : undefined,
+          notes: notesMatch ? notesMatch[1].trim() : undefined
         });
       }
     });
@@ -207,8 +237,14 @@ function App() {
 
   // Funció per seleccionar un contacte
   const handleSelectContact = (person: PersonGroup) => {
+    setSelectedContactId(person.id);
     setWorkerName(person.name);
     setWorkerEmail(person.email || '');
+    setWorkerRole(person.role || '');
+    setWorkerTel1(person.tel1 || '');
+    setWorkerTel2(person.tel2 || '');
+    setWorkerWeb(person.web || '');
+    setWorkerNotes(person.notes || '');
   };
 
   // Filtrar contactes per nom o rol
@@ -245,6 +281,70 @@ function App() {
     if (matchingProfile) {
       setWorkerEmail(matchingProfile.email);
     }
+  };
+
+  // Funció per netejar el formulari
+  const handleClearForm = () => {
+    setSelectedContactId(null);
+    setWorkerName('');
+    setWorkerEmail('');
+    setWorkerRole('');
+    setWorkerTel1('');
+    setWorkerTel2('');
+    setWorkerWeb('');
+    setWorkerNotes('');
+  };
+
+  // Funció per guardar/actualitzar contacte
+  const handleUpdateContact = () => {
+    if (!workerName.trim()) {
+      alert('El nom del contacte és obligatori');
+      return;
+    }
+
+    let updatedContacts: PersonGroup[];
+    
+    if (selectedContactId) {
+      // Actualitzar contacte existent
+      updatedContacts = contacts.map(contact => 
+        contact.id === selectedContactId 
+          ? { 
+              ...contact, 
+              name: workerName, 
+              email: workerEmail || undefined, 
+              role: workerRole || undefined,
+              tel1: workerTel1 || undefined, 
+              tel2: workerTel2 || undefined,
+              web: workerWeb || undefined,
+              notes: workerNotes || undefined
+            }
+          : contact
+      );
+    } else {
+      // Crear nou contacte
+      const newContact: PersonGroup = {
+        id: `manual-${Math.random().toString(36).substr(2, 9)}`,
+        name: workerName,
+        email: workerEmail || undefined,
+        role: workerRole || undefined,
+        tel1: workerTel1 || undefined,
+        tel2: workerTel2 || undefined,
+        web: workerWeb || undefined,
+        notes: workerNotes || undefined
+      };
+      updatedContacts = [...contacts, newContact];
+      setSelectedContactId(newContact.id);
+    }
+    
+    setContacts(updatedContacts);
+    localStorage.setItem('gep_imported_contacts', JSON.stringify(updatedContacts));
+    
+    // Mostrar feedback visual
+    const feedback = document.createElement('div');
+    feedback.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    feedback.textContent = 'Contacte actualitzat';
+    document.body.appendChild(feedback);
+    setTimeout(() => document.body.removeChild(feedback), 2000);
   };
 
   const handleSend = () => {
@@ -391,7 +491,8 @@ function App() {
           </div>
 
           {/* Dades del Treballador */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="space-y-4 pt-2">
+            {/* Row 1: Nom Treballador (Full width) */}
             <div>
               <Tooltip text="Escriu o selecciona el nom. L'email s'omplirà automàticament si ja el tens guardat.">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nom Treballador</label>
@@ -413,19 +514,131 @@ function App() {
                 {historyProfiles.map((profile, i) => <option key={i} value={profile.name} />)}
               </datalist>
             </div>
+            
+            {/* Row 2: Rol (Left) / Email (Right) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Tooltip text="Rol o càrrec del treballador">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                </Tooltip>
+                <Tooltip text="Rol o càrrec del treballador">
+                  <input 
+                    type="text" 
+                    value={workerRole} 
+                    onChange={e => setWorkerRole(e.target.value)}
+                    placeholder="ex: Tècnic de so"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </Tooltip>
+              </div>
+              <div>
+                <Tooltip text="Correu electrònic on s'enviarà la petició">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
+                </Tooltip>
+                <Tooltip text="Correu electrònic on s'enviarà la petició">
+                  <input 
+                    type="email" 
+                    value={workerEmail} 
+                    onChange={e => setWorkerEmail(e.target.value)}
+                    placeholder="ex: joan@gmail.com"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </Tooltip>
+              </div>
+            </div>
+            
+            {/* Row 3: Telèfon 1 (Left) / Telèfon 2 (Right) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Tooltip text="Telèfon principal del contacte">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telèfon 1</label>
+                </Tooltip>
+                <Tooltip text="Telèfon principal del contacte">
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      value={workerTel1} 
+                      onChange={e => setWorkerTel1(e.target.value)}
+                      placeholder="ex: 600123456"
+                      className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                    />
+                  </div>
+                </Tooltip>
+              </div>
+              <div>
+                <Tooltip text="Telèfon secundari del contacte">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telèfon 2</label>
+                </Tooltip>
+                <Tooltip text="Telèfon secundari del contacte">
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      value={workerTel2} 
+                      onChange={e => setWorkerTel2(e.target.value)}
+                      placeholder="ex: 931234567"
+                      className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                    />
+                  </div>
+                </Tooltip>
+              </div>
+            </div>
+
+            {/* Row 4: Web (Full width) */}
             <div>
-              <Tooltip text="Correu electrònic on s'enviarà la petició">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
+              <Tooltip text="Pàgina web o perfil professional">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Web</label>
               </Tooltip>
-              <Tooltip text="Correu electrònic on s'enviarà la petició">
-                <input 
-                  type="email" 
-                  value={workerEmail} 
-                  onChange={e => setWorkerEmail(e.target.value)}
-                  placeholder="ex: joan@gmail.com"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-                />
+              <Tooltip text="Pàgina web o perfil professional">
+                <div className="relative">
+                  <Globe className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="url" 
+                    value={workerWeb} 
+                    onChange={e => setWorkerWeb(e.target.value)}
+                    placeholder="ex: https://joantecnic.cat"
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </div>
               </Tooltip>
+            </div>
+
+            {/* Row 5: Notes (Textarea, full width) */}
+            <div>
+              <Tooltip text="Notes addicionals sobre el contacte">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+              </Tooltip>
+              <Tooltip text="Notes addicionals sobre el contacte">
+                <div className="relative">
+                  <FileText className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <textarea 
+                    value={workerNotes} 
+                    onChange={e => setWorkerNotes(e.target.value)}
+                    placeholder="Notes addicionals..."
+                    rows={3}
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 resize-none"
+                  />
+                </div>
+              </Tooltip>
+            </div>
+
+            {/* Action Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={handleUpdateContact}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                Guardar a la llista
+              </button>
+              <button 
+                onClick={handleClearForm}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Netejar Formulari
+              </button>
             </div>
           </div>
 
@@ -488,14 +701,27 @@ function App() {
             <button
               key={contact.id}
               onClick={() => handleSelectContact(contact)}
-              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+              className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                selectedContactId === contact.id 
+                  ? 'bg-blue-100 border-blue-400' 
+                  : 'border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+              }`}
             >
               <div className="font-medium text-gray-800">{contact.name}</div>
               {contact.role && (
-                <div className="text-sm text-gray-500">{contact.role}</div>
+                <div className="text-sm text-gray-500 italic">{contact.role}</div>
               )}
               {contact.email && (
-                <div className="text-sm text-blue-600 truncate">{contact.email}</div>
+                <div className="flex items-center gap-1 text-sm text-blue-600 truncate">
+                  <Mail className="w-3 h-3" />
+                  {contact.email}
+                </div>
+              )}
+              {contact.tel1 && (
+                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                  <Phone className="w-3 h-3" />
+                  {contact.tel1}
+                </div>
               )}
             </button>
           ))}
