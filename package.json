@@ -9,6 +9,7 @@
   "main": "main.cjs",
   "scripts": {
     "dev": "vite",
+    "dev:clean": "rm -rf node_modules/.vite dist && npm run dev",
     "build": "tsc && vite build",
     "build:linux": "npm run build && cross-env BRANCH_NAME=local BUILD_NUMBER=dev electron-builder --linux",
     "build:win": "npm run build && cross-env BRANCH_NAME=local BUILD_NUMBER=dev electron-builder --win",
@@ -16,7 +17,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
-    "start": "concurrently \"npm run dev\" \"npm run electron\""
+    "start": "concurrently \"npm run dev\" \"npm run electron\"",
+    "start:clean": "rm -rf node_modules/.vite dist && npm start"
   },
   "dependencies": {
     "lucide-react": "^0.300.0",

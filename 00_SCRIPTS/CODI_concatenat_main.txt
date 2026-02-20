@@ -1,7 +1,7 @@
 === PROJECTE CONCATENAT ===
 Projecte: gep-mailer-proto
 Branca: main
-Data: 2026-02-20 13:32:57
+Data: 2026-02-20 14:12:00
 ==================================================
 
 --- START: ../gep-mailer-proto/.gitignore -- branca main ---
@@ -20,23 +20,38 @@ Aplicació auxiliar de l'ecosistema GEP dissenyada per agilitzar la comunicació
 
 ## Descripció
 
-GEP-MAILER és una eina d'escriptori especialitzada en la gestió de sol·licituds de disponibilitat de personal mitjançant correu electrònic. Forma part de l'ecosistema GEP i està optimitzada per simplificar els processos de comunicació amb equips tècnics, oferint una interfície intuïtiva i funcionalitats avançades per a la gestió de contactes i esdeveniments.
+GEP-MAILER és una eina d'escriptori especialitzada en la gestió de sol·licituds de disponibilitat de personal mitjançant correu electrònic. Forma part de l'ecosistema GEP i està optimitzada per simplificar els processos de comunicació amb equips tècnics, oferint una interfície intuïtiva i funcionalitats avançades per a la gestió completa de contactes i esdeveniments.
+
+*Amb **paritat de dades 100%** amb l'aplicació GEP principal, suport complet per a la gestió de telèfons, rols, webs i notes.
 
 ## Funcionalitats Clau
 
 - **Generació automàtica de correus "Nested Mailto"**: Crea correus electrònics amb botons de resposta integrats (Sí/No/Parcial/Pendent) per facilitar la recollida ràpida de disponibilitats.
 
+- **Gestió completa de contactes (CRUD)**: Crea, llegeix, actualitza i elimina contactes amb paritat de dades 100% amb l'aplicació GEP principal. Inclou:
+  - Nom, rol, email, telèfons (tel1, tel2), web i notes
+  - Selecció visual de contactes amb resaltat
+  - Formulari professional amb icones i validació
+
+- **Gestió de telèfons avançada**: Suport complet per a múltiples números de telèfon amb detecció automàtica en imports:
+  - Telèfon principal i secundari
+  - Detecció intel·ligent en CSV (phone, mobile, tel, cell)
+  - Extracció des de VCF (camp TEL)
+
 - **Gestió intel·ligent d'importacions**: Detecció automàtica de contactes duplicats amb opcions de fusionar (afegir a l'agenda existent) o reemplaçar (esborrar l'agenda anterior).
 
 - **Importació d'agenda de contactes**: Suporta múltiples formats per importar contactes:
-  - Formats GEP natius (`.gep`, `.json`)
-  - Formats universals (`.csv`, `.vcf`)
+  - Formats GEP natius (`.gep`, `.json`) - Paritat completa
+  - Formats universals (`.csv`, `.vcf`) - Mapeig intel·ligent de camps
+  - Detecció automàtica de: rol, telèfons, web, notes
 
 - **Suport intel·ligent per a esdeveniments de múltiples dies**: Gestiona esdeveniments que s'estenen al llarg de diversos dies amb optimització automàtica de la programació.
 
 - **Interfície optimitzada de dues columnes**: Disseny eficient amb cerca ràpida integrada per localitzar contactes i esdeveniments instantàniament.
 
 - **Memòria d'historial**: L'aplicació recorda automàticament els últims esdeveniments creats i treballadors contactats per auto-emplenar els camps i estalviar temps en futurs correus.
+
+- **Exportació compatible amb GEP**: Genera fitxers `.gep` amb l'estructura exacta `peopleGroups: [...]` requerida per l'aplicació GEP principal.
 
 ## Instal·lació
 
@@ -494,7 +509,7 @@ function App() {
                 // Guardar contactes a l'estat pendent per mostrar el modal
                 setPendingContacts(newContacts);
                 setIsImportModalOpen(true);
-                alert(`S'han trobat ${newContacts.length} contactes al fitxer!`);
+                // alert(`S'han trobat ${newContacts.length} contactes al fitxer!`); // Opcional, el modal ja ho diu
             }
             catch (error) {
                 console.error('Error parsing file:', error);
@@ -626,17 +641,18 @@ function App() {
         const link = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, startDate, endDate, subject);
         window.location.href = link;
     };
-    return (_jsxs("div", { className: "flex h-screen bg-gray-100 p-4 gap-4", children: [_jsxs("div", { className: "flex-1 bg-white p-6 rounded-xl shadow-lg overflow-y-auto", children: [_jsxs("h1", { className: "text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2", children: [_jsx(Mail, { className: "w-6 h-6 text-blue-600" }), "Prototip Mailer GEP"] }), _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4", children: [_jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("label", { className: "block text-sm font-medium text-blue-800 mb-1", children: "El teu Email (Aquesta \u00E9s l'adre\u00E7a on t'arribaran les respostes)" }) }), _jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("input", { type: "email", value: managerEmail, onChange: e => setManagerEmail(e.target.value), placeholder: "ex: produccio@elteatre.cat", className: "w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400" }) })] }), _jsxs("div", { className: "p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Esdeveniment" }) }), _jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("input", { type: "text", list: "events-list", value: eventName, onChange: e => setEventName(e.target.value), placeholder: "ex: Concert Festa Major", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) }), _jsx("datalist", { id: "events-list", children: historyEvents.map((ev, i) => _jsx("option", { value: ev }, i)) })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Inici" }) }), _jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: startDate, onChange: e => setStartDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Fi" }) }), _jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: endDate, onChange: e => setEndDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Assumpte del correu" }) }), _jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsxs("div", { className: "relative", children: [_jsx(Type, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: subject, onChange: e => setSubject(e.target.value), placeholder: "Disponibilitat: ...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium" })] }) })] })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4 pt-2", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Nom Treballador" }) }), _jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsxs("div", { className: "relative", children: [_jsx(User, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", list: "workers-list", value: workerName, onChange: handleWorkerNameChange, placeholder: "ex: Joan T\u00E8cnic", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }) }), _jsx("datalist", { id: "workers-list", children: historyProfiles.map((profile, i) => _jsx("option", { value: profile.name }, i)) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Email Treballador" }) }), _jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("input", { type: "email", value: workerEmail, onChange: e => setWorkerEmail(e.target.value), placeholder: "ex: joan@gmail.com", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) })] })] }), _jsx(Tooltip, { text: "Crea l'esborrany i obre el teu gestor de correu predeterminat", children: _jsxs("button", { onClick: handleSend, className: "w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md", children: [_jsx(Send, { className: "w-5 h-5" }), "Generar i Obrir Correu"] }) })] })] }), _jsxs("div", { className: "w-80 bg-white p-4 rounded-xl shadow-lg flex flex-col", children: [_jsx("input", { type: "file", ref: fileInputRef, onChange: handleImportContacts, accept: ".json,.gep,.csv,.vcf", className: "hidden" }), _jsxs(Tooltip, { text: "Importar des de .gep, .json, .csv o .vcf", children: [_jsxs("button", { onClick: () => fileInputRef.current?.click(), className: "w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Upload, { className: "w-4 h-4" }), "Importar Contactes"] }), _jsxs(Tooltip, { text: "Guardar llista actual compatible amb GEP", children: [_jsxs("button", { onClick: handleExportContacts, className: "w-full mb-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Download, { className: "w-4 h-4" }), "Exportar .GEP"] }), _jsxs("div", { className: "relative mb-4", children: [_jsx(Search, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: contactSearch, onChange: e => setContactSearch(e.target.value), placeholder: "Buscar contactes...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }), _jsxs("div", { className: "flex-1 overflow-y-auto space-y-2", children: [filteredContacts.map((contact) => (_jsxs("button", { onClick: () => handleSelectContact(contact), className: "w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors", children: [_jsx("div", { className: "font-medium text-gray-800", children: contact.name }), contact.role && (_jsx("div", { className: "text-sm text-gray-500", children: contact.role })), contact.email && (_jsx("div", { className: "text-sm text-blue-600 truncate", children: contact.email }))] }, contact.id))), filteredContacts.length === 0 && (_jsx("div", { className: "text-center text-gray-500 py-8", children: contacts.length === 0
-                                                    ? "No hi ha contactes importats. Importa un fitxer JSON."
-                                                    : "No s'han trobat contactes amb aquesta cerca." }))] })] }), _jsx(ImportModal, { isOpen: isImportModalOpen, onClose: closeImportModal, onMerge: confirmMerge, onReplace: confirmReplace, newContactCount: pendingContacts.length })] })] }), "); } export default App;"] }));
+    return (_jsxs("div", { className: "flex h-screen bg-gray-100 p-4 gap-4", children: [_jsxs("div", { className: "flex-1 bg-white p-6 rounded-xl shadow-lg overflow-y-auto", children: [_jsxs("h1", { className: "text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2", children: [_jsx(Mail, { className: "w-6 h-6 text-blue-600" }), "Prototip Mailer GEP"] }), _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4", children: [_jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("label", { className: "block text-sm font-medium text-blue-800 mb-1", children: "El teu Email (Aquesta \u00E9s l'adre\u00E7a on t'arribaran les respostes)" }) }), _jsx(Tooltip, { text: "L'adre\u00E7a on rebr\u00E0s les respostes dels treballadors", children: _jsx("input", { type: "email", value: managerEmail, onChange: e => setManagerEmail(e.target.value), placeholder: "ex: produccio@elteatre.cat", className: "w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400" }) })] }), _jsxs("div", { className: "p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Esdeveniment" }) }), _jsx(Tooltip, { text: "Nom de l'esdeveniment o bolo", children: _jsx("input", { type: "text", list: "events-list", value: eventName, onChange: e => setEventName(e.target.value), placeholder: "ex: Concert Festa Major", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) }), _jsx("datalist", { id: "events-list", children: historyEvents.map((ev, i) => _jsx("option", { value: ev }, i)) })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Inici" }) }), _jsx(Tooltip, { text: "Primer dia de l'esdeveniment", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: startDate, onChange: e => setStartDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Data Fi" }) }), _jsx(Tooltip, { text: "\u00DAltim dia de l'esdeveniment (deixa-ho igual si \u00E9s nom\u00E9s un dia)", children: _jsxs("div", { className: "relative", children: [_jsx(Calendar, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "date", value: endDate, onChange: e => setEndDate(e.target.value), className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700" })] }) })] })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Assumpte del correu" }) }), _jsx(Tooltip, { text: "T\u00EDtol del correu que rebr\u00E0 el treballador", children: _jsxs("div", { className: "relative", children: [_jsx(Type, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: subject, onChange: e => setSubject(e.target.value), placeholder: "Disponibilitat: ...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium" })] }) })] })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4 pt-2", children: [_jsxs("div", { children: [_jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Nom Treballador" }) }), _jsx(Tooltip, { text: "Escriu o selecciona el nom. L'email s'omplir\u00E0 autom\u00E0ticament si ja el tens guardat.", children: _jsxs("div", { className: "relative", children: [_jsx(User, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", list: "workers-list", value: workerName, onChange: handleWorkerNameChange, placeholder: "ex: Joan T\u00E8cnic", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }) }), _jsx("datalist", { id: "workers-list", children: historyProfiles.map((profile, i) => _jsx("option", { value: profile.name }, i)) })] }), _jsxs("div", { children: [_jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("label", { className: "block text-sm font-medium text-gray-700 mb-1", children: "Email Treballador" }) }), _jsx(Tooltip, { text: "Correu electr\u00F2nic on s'enviar\u00E0 la petici\u00F3", children: _jsx("input", { type: "email", value: workerEmail, onChange: e => setWorkerEmail(e.target.value), placeholder: "ex: joan@gmail.com", className: "w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" }) })] })] }), _jsx(Tooltip, { text: "Crea l'esborrany i obre el teu gestor de correu predeterminat", children: _jsxs("button", { onClick: handleSend, className: "w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md", children: [_jsx(Send, { className: "w-5 h-5" }), "Generar i Obrir Correu"] }) })] })] }), _jsxs("div", { className: "w-80 bg-white p-4 rounded-xl shadow-lg flex flex-col", children: [_jsx("input", { type: "file", ref: fileInputRef, onChange: handleImportContacts, accept: ".json,.gep,.csv,.vcf", className: "hidden" }), _jsx(Tooltip, { text: "Importar des de .gep, .json, .csv o .vcf", children: _jsxs("button", { onClick: () => fileInputRef.current?.click(), className: "w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Upload, { className: "w-4 h-4" }), "Importar Contactes"] }) }), _jsx(Tooltip, { text: "Guardar llista actual compatible amb GEP", children: _jsxs("button", { onClick: handleExportContacts, className: "w-full mb-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors", children: [_jsx(Download, { className: "w-4 h-4" }), "Exportar .GEP"] }) }), _jsxs("div", { className: "relative mb-4", children: [_jsx(Search, { className: "w-4 h-4 absolute left-3 top-3 text-gray-400" }), _jsx("input", { type: "text", value: contactSearch, onChange: e => setContactSearch(e.target.value), placeholder: "Buscar contactes...", className: "w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400" })] }), _jsxs("div", { className: "flex-1 overflow-y-auto space-y-2", children: [filteredContacts.map((contact) => (_jsxs("button", { onClick: () => handleSelectContact(contact), className: "w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors", children: [_jsx("div", { className: "font-medium text-gray-800", children: contact.name }), contact.role && (_jsx("div", { className: "text-sm text-gray-500", children: contact.role })), contact.email && (_jsx("div", { className: "text-sm text-blue-600 truncate", children: contact.email }))] }, contact.id))), filteredContacts.length === 0 && (_jsx("div", { className: "text-center text-gray-500 py-8", children: contacts.length === 0
+                                    ? "No hi ha contactes importats. Importa un fitxer JSON."
+                                    : "No s'han trobat contactes amb aquesta cerca." }))] })] }), _jsx(ImportModal, { isOpen: isImportModalOpen, onClose: closeImportModal, onMerge: confirmMerge, onReplace: confirmReplace, newContactCount: pendingContacts.length })] }));
 }
+export default App;
 
 --- END: ../gep-mailer-proto/src/App.js -- branca main ---
 
 --- START: ../gep-mailer-proto/src/App.tsx -- branca main ---
 import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
-import { Send, User, Calendar, Mail, Type, Upload, Search, Download } from 'lucide-react';
+import { Send, User, Calendar, Mail, Type, Upload, Search, Download, Phone, Save, Globe, FileText } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
 import { ImportModal } from './components/ImportModal';
 
@@ -648,8 +664,12 @@ interface WorkerProfile {
 interface PersonGroup {
   id: string;
   name: string;
-  email?: string;
   role?: string;
+  email?: string;
+  tel1?: string;
+  tel2?: string;
+  web?: string;
+  notes?: string;
 }
 
 function App() {
@@ -661,6 +681,12 @@ function App() {
   const [endDate, setEndDate] = useState('');
   const [workerName, setWorkerName] = useState('');
   const [workerEmail, setWorkerEmail] = useState('');
+  const [workerRole, setWorkerRole] = useState('');
+  const [workerTel1, setWorkerTel1] = useState('');
+  const [workerTel2, setWorkerTel2] = useState('');
+  const [workerWeb, setWorkerWeb] = useState('');
+  const [workerNotes, setWorkerNotes] = useState('');
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   
   // 2. Estats per a contactes importats
   const [contacts, setContacts] = useState<PersonGroup[]>(JSON.parse(localStorage.getItem('gep_imported_contacts') || '[]'));
@@ -679,6 +705,11 @@ function App() {
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     const nameIndex = headers.findIndex(h => h.includes('name'));
     const emailIndex = headers.findIndex(h => h.includes('email'));
+    const roleIndex = headers.findIndex(h => h.includes('job') || h.includes('position') || h.includes('title') || h.includes('role'));
+    const tel1Index = headers.findIndex(h => h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('cell'));
+    const tel2Index = headers.findIndex((h, i) => i !== tel1Index && (h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('cell')));
+    const webIndex = headers.findIndex(h => h.includes('web') || h.includes('url') || h.includes('site'));
+    const notesIndex = headers.findIndex(h => h.includes('note') || h.includes('comment') || h.includes('description'));
     
     if (nameIndex === -1) return [];
     
@@ -690,7 +721,11 @@ function App() {
           id: `import-csv-${Math.random().toString(36).substr(2, 9)}`,
           name: values[nameIndex],
           email: emailIndex !== -1 ? values[emailIndex] : undefined,
-          role: undefined
+          role: roleIndex !== -1 ? values[roleIndex] : undefined,
+          tel1: tel1Index !== -1 ? values[tel1Index] : undefined,
+          tel2: tel2Index !== -1 ? values[tel2Index] : undefined,
+          web: webIndex !== -1 ? values[webIndex] : undefined,
+          notes: notesIndex !== -1 ? values[notesIndex] : undefined
         });
       }
     }
@@ -706,13 +741,24 @@ function App() {
     vcardBlocks.forEach(block => {
       const nameMatch = block.match(/^FN:(.+)$/m);
       const emailMatch = block.match(/^EMAIL.*:(.+)$/m);
+      const roleMatch = block.match(/^TITLE:(.+)$/m);
+      const telMatches = block.match(/^TEL.*:(.+)$/gm);
+      const webMatch = block.match(/^URL:(.+)$/m);
+      const notesMatch = block.match(/^NOTE:(.+)$/m);
       
       if (nameMatch) {
+        const tel1 = telMatches && telMatches.length > 0 ? telMatches[0].split(':')[1].trim() : undefined;
+        const tel2 = telMatches && telMatches.length > 1 ? telMatches[1].split(':')[1].trim() : undefined;
+        
         contacts.push({
           id: `import-vcf-${Math.random().toString(36).substr(2, 9)}`,
           name: nameMatch[1].trim(),
           email: emailMatch ? emailMatch[1].trim() : undefined,
-          role: undefined
+          role: roleMatch ? roleMatch[1].trim() : undefined,
+          tel1: tel1,
+          tel2: tel2,
+          web: webMatch ? webMatch[1].trim() : undefined,
+          notes: notesMatch ? notesMatch[1].trim() : undefined
         });
       }
     });
@@ -766,7 +812,7 @@ function App() {
         setPendingContacts(newContacts);
         setIsImportModalOpen(true);
         
-        alert(`S'han trobat ${newContacts.length} contactes al fitxer!`);
+        // alert(`S'han trobat ${newContacts.length} contactes al fitxer!`); // Opcional, el modal ja ho diu
       } catch (error) {
         console.error('Error parsing file:', error);
         alert('Error al llegir el fitxer. Assegura\'t que té el format correcte.');
@@ -843,8 +889,14 @@ function App() {
 
   // Funció per seleccionar un contacte
   const handleSelectContact = (person: PersonGroup) => {
+    setSelectedContactId(person.id);
     setWorkerName(person.name);
     setWorkerEmail(person.email || '');
+    setWorkerRole(person.role || '');
+    setWorkerTel1(person.tel1 || '');
+    setWorkerTel2(person.tel2 || '');
+    setWorkerWeb(person.web || '');
+    setWorkerNotes(person.notes || '');
   };
 
   // Filtrar contactes per nom o rol
@@ -881,6 +933,70 @@ function App() {
     if (matchingProfile) {
       setWorkerEmail(matchingProfile.email);
     }
+  };
+
+  // Funció per netejar el formulari
+  const handleClearForm = () => {
+    setSelectedContactId(null);
+    setWorkerName('');
+    setWorkerEmail('');
+    setWorkerRole('');
+    setWorkerTel1('');
+    setWorkerTel2('');
+    setWorkerWeb('');
+    setWorkerNotes('');
+  };
+
+  // Funció per guardar/actualitzar contacte
+  const handleUpdateContact = () => {
+    if (!workerName.trim()) {
+      alert('El nom del contacte és obligatori');
+      return;
+    }
+
+    let updatedContacts: PersonGroup[];
+    
+    if (selectedContactId) {
+      // Actualitzar contacte existent
+      updatedContacts = contacts.map(contact => 
+        contact.id === selectedContactId 
+          ? { 
+              ...contact, 
+              name: workerName, 
+              email: workerEmail || undefined, 
+              role: workerRole || undefined,
+              tel1: workerTel1 || undefined, 
+              tel2: workerTel2 || undefined,
+              web: workerWeb || undefined,
+              notes: workerNotes || undefined
+            }
+          : contact
+      );
+    } else {
+      // Crear nou contacte
+      const newContact: PersonGroup = {
+        id: `manual-${Math.random().toString(36).substr(2, 9)}`,
+        name: workerName,
+        email: workerEmail || undefined,
+        role: workerRole || undefined,
+        tel1: workerTel1 || undefined,
+        tel2: workerTel2 || undefined,
+        web: workerWeb || undefined,
+        notes: workerNotes || undefined
+      };
+      updatedContacts = [...contacts, newContact];
+      setSelectedContactId(newContact.id);
+    }
+    
+    setContacts(updatedContacts);
+    localStorage.setItem('gep_imported_contacts', JSON.stringify(updatedContacts));
+    
+    // Mostrar feedback visual
+    const feedback = document.createElement('div');
+    feedback.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    feedback.textContent = 'Contacte actualitzat';
+    document.body.appendChild(feedback);
+    setTimeout(() => document.body.removeChild(feedback), 2000);
   };
 
   const handleSend = () => {
@@ -1027,7 +1143,8 @@ function App() {
           </div>
 
           {/* Dades del Treballador */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="space-y-4 pt-2">
+            {/* Row 1: Nom Treballador (Full width) */}
             <div>
               <Tooltip text="Escriu o selecciona el nom. L'email s'omplirà automàticament si ja el tens guardat.">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nom Treballador</label>
@@ -1049,19 +1166,131 @@ function App() {
                 {historyProfiles.map((profile, i) => <option key={i} value={profile.name} />)}
               </datalist>
             </div>
+            
+            {/* Row 2: Rol (Left) / Email (Right) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Tooltip text="Rol o càrrec del treballador">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                </Tooltip>
+                <Tooltip text="Rol o càrrec del treballador">
+                  <input 
+                    type="text" 
+                    value={workerRole} 
+                    onChange={e => setWorkerRole(e.target.value)}
+                    placeholder="ex: Tècnic de so"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </Tooltip>
+              </div>
+              <div>
+                <Tooltip text="Correu electrònic on s'enviarà la petició">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
+                </Tooltip>
+                <Tooltip text="Correu electrònic on s'enviarà la petició">
+                  <input 
+                    type="email" 
+                    value={workerEmail} 
+                    onChange={e => setWorkerEmail(e.target.value)}
+                    placeholder="ex: joan@gmail.com"
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </Tooltip>
+              </div>
+            </div>
+            
+            {/* Row 3: Telèfon 1 (Left) / Telèfon 2 (Right) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Tooltip text="Telèfon principal del contacte">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telèfon 1</label>
+                </Tooltip>
+                <Tooltip text="Telèfon principal del contacte">
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      value={workerTel1} 
+                      onChange={e => setWorkerTel1(e.target.value)}
+                      placeholder="ex: 600123456"
+                      className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                    />
+                  </div>
+                </Tooltip>
+              </div>
+              <div>
+                <Tooltip text="Telèfon secundari del contacte">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telèfon 2</label>
+                </Tooltip>
+                <Tooltip text="Telèfon secundari del contacte">
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      value={workerTel2} 
+                      onChange={e => setWorkerTel2(e.target.value)}
+                      placeholder="ex: 931234567"
+                      className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                    />
+                  </div>
+                </Tooltip>
+              </div>
+            </div>
+
+            {/* Row 4: Web (Full width) */}
             <div>
-              <Tooltip text="Correu electrònic on s'enviarà la petició">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
+              <Tooltip text="Pàgina web o perfil professional">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Web</label>
               </Tooltip>
-              <Tooltip text="Correu electrònic on s'enviarà la petició">
-                <input 
-                  type="email" 
-                  value={workerEmail} 
-                  onChange={e => setWorkerEmail(e.target.value)}
-                  placeholder="ex: joan@gmail.com"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-                />
+              <Tooltip text="Pàgina web o perfil professional">
+                <div className="relative">
+                  <Globe className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="url" 
+                    value={workerWeb} 
+                    onChange={e => setWorkerWeb(e.target.value)}
+                    placeholder="ex: https://joantecnic.cat"
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </div>
               </Tooltip>
+            </div>
+
+            {/* Row 5: Notes (Textarea, full width) */}
+            <div>
+              <Tooltip text="Notes addicionals sobre el contacte">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+              </Tooltip>
+              <Tooltip text="Notes addicionals sobre el contacte">
+                <div className="relative">
+                  <FileText className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <textarea 
+                    value={workerNotes} 
+                    onChange={e => setWorkerNotes(e.target.value)}
+                    placeholder="Notes addicionals..."
+                    rows={3}
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 resize-none"
+                  />
+                </div>
+              </Tooltip>
+            </div>
+
+            {/* Action Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={handleUpdateContact}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                Guardar a la llista
+              </button>
+              <button 
+                onClick={handleClearForm}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Netejar Formulari
+              </button>
             </div>
           </div>
 
@@ -1096,6 +1325,7 @@ function App() {
             <Upload className="w-4 h-4" />
             Importar Contactes
           </button>
+        </Tooltip>
 
         <Tooltip text="Guardar llista actual compatible amb GEP">
           <button
@@ -1105,6 +1335,7 @@ function App() {
             <Download className="w-4 h-4" />
             Exportar .GEP
           </button>
+        </Tooltip>
 
         <div className="relative mb-4">
           <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
@@ -1122,14 +1353,27 @@ function App() {
             <button
               key={contact.id}
               onClick={() => handleSelectContact(contact)}
-              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+              className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                selectedContactId === contact.id 
+                  ? 'bg-blue-100 border-blue-400' 
+                  : 'border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+              }`}
             >
               <div className="font-medium text-gray-800">{contact.name}</div>
               {contact.role && (
-                <div className="text-sm text-gray-500">{contact.role}</div>
+                <div className="text-sm text-gray-500 italic">{contact.role}</div>
               )}
               {contact.email && (
-                <div className="text-sm text-blue-600 truncate">{contact.email}</div>
+                <div className="flex items-center gap-1 text-sm text-blue-600 truncate">
+                  <Mail className="w-3 h-3" />
+                  {contact.email}
+                </div>
+              )}
+              {contact.tel1 && (
+                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                  <Phone className="w-3 h-3" />
+                  {contact.tel1}
+                </div>
               )}
             </button>
           ))}

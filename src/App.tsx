@@ -625,20 +625,24 @@ function App() {
 
             {/* Action Row */}
             <div className="grid grid-cols-2 gap-4">
-              <button 
-                onClick={handleUpdateContact}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-              >
-                <Save className="w-4 h-4" />
-                Guardar a la llista
-              </button>
-              <button 
-                onClick={handleClearForm}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-              >
-                <User className="w-4 h-4" />
-                Netejar Formulari
-              </button>
+              <Tooltip text="Desa el contacte actual a la llista de contactes importats">
+                <button 
+                  onClick={handleUpdateContact}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  Guardar a la llista
+                </button>
+              </Tooltip>
+              <Tooltip text="Neteja tots els camps del formulari i dessel·lecciona el contacte">
+                <button 
+                  onClick={handleClearForm}
+                  className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  Netejar Formulari
+                </button>
+              </Tooltip>
             </div>
           </div>
 
