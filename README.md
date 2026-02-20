@@ -4,23 +4,38 @@ Aplicació auxiliar de l'ecosistema GEP dissenyada per agilitzar la comunicació
 
 ## Descripció
 
-GEP-MAILER és una eina d'escriptori especialitzada en la gestió de sol·licituds de disponibilitat de personal mitjançant correu electrònic. Forma part de l'ecosistema GEP i està optimitzada per simplificar els processos de comunicació amb equips tècnics, oferint una interfície intuïtiva i funcionalitats avançades per a la gestió de contactes i esdeveniments.
+GEP-MAILER és una eina d'escriptori especialitzada en la gestió de sol·licituds de disponibilitat de personal mitjançant correu electrònic. Forma part de l'ecosistema GEP i està optimitzada per simplificar els processos de comunicació amb equips tècnics, oferint una interfície intuïtiva i funcionalitats avançades per a la gestió completa de contactes i esdeveniments.
+
+*Amb **paritat de dades 100%** amb l'aplicació GEP principal, suport complet per a la gestió de telèfons, rols, webs i notes.
 
 ## Funcionalitats Clau
 
 - **Generació automàtica de correus "Nested Mailto"**: Crea correus electrònics amb botons de resposta integrats (Sí/No/Parcial/Pendent) per facilitar la recollida ràpida de disponibilitats.
 
+- **Gestió completa de contactes (CRUD)**: Crea, llegeix, actualitza i elimina contactes amb paritat de dades 100% amb l'aplicació GEP principal. Inclou:
+  - Nom, rol, email, telèfons (tel1, tel2), web i notes
+  - Selecció visual de contactes amb resaltat
+  - Formulari professional amb icones i validació
+
+- **Gestió de telèfons avançada**: Suport complet per a múltiples números de telèfon amb detecció automàtica en imports:
+  - Telèfon principal i secundari
+  - Detecció intel·ligent en CSV (phone, mobile, tel, cell)
+  - Extracció des de VCF (camp TEL)
+
 - **Gestió intel·ligent d'importacions**: Detecció automàtica de contactes duplicats amb opcions de fusionar (afegir a l'agenda existent) o reemplaçar (esborrar l'agenda anterior).
 
 - **Importació d'agenda de contactes**: Suporta múltiples formats per importar contactes:
-  - Formats GEP natius (`.gep`, `.json`)
-  - Formats universals (`.csv`, `.vcf`)
+  - Formats GEP natius (`.gep`, `.json`) - Paritat completa
+  - Formats universals (`.csv`, `.vcf`) - Mapeig intel·ligent de camps
+  - Detecció automàtica de: rol, telèfons, web, notes
 
 - **Suport intel·ligent per a esdeveniments de múltiples dies**: Gestiona esdeveniments que s'estenen al llarg de diversos dies amb optimització automàtica de la programació.
 
 - **Interfície optimitzada de dues columnes**: Disseny eficient amb cerca ràpida integrada per localitzar contactes i esdeveniments instantàniament.
 
 - **Memòria d'historial**: L'aplicació recorda automàticament els últims esdeveniments creats i treballadors contactats per auto-emplenar els camps i estalviar temps en futurs correus.
+
+- **Exportació compatible amb GEP**: Genera fitxers `.gep` amb l'estructura exacta `peopleGroups: [...]` requerida per l'aplicació GEP principal.
 
 ## Instal·lació
 
