@@ -130,7 +130,7 @@ function App() {
         setPendingContacts(newContacts);
         setIsImportModalOpen(true);
         
-        alert(`S'han trobat ${newContacts.length} contactes al fitxer!`);
+        // alert(`S'han trobat ${newContacts.length} contactes al fitxer!`); // Opcional, el modal ja ho diu
       } catch (error) {
         console.error('Error parsing file:', error);
         alert('Error al llegir el fitxer. Assegura\'t que té el format correcte.');
@@ -460,6 +460,7 @@ function App() {
             <Upload className="w-4 h-4" />
             Importar Contactes
           </button>
+        </Tooltip>
 
         <Tooltip text="Guardar llista actual compatible amb GEP">
           <button
@@ -469,6 +470,7 @@ function App() {
             <Download className="w-4 h-4" />
             Exportar .GEP
           </button>
+        </Tooltip>
 
         <div className="relative mb-4">
           <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
