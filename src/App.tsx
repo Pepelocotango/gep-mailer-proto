@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
 import { Send, User, Calendar, Mail, Type, Upload, Search } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
+import { ImportModal } from './components/ImportModal';
 
 interface WorkerProfile {
   name: string;
@@ -28,6 +29,8 @@ function App() {
   // 2. Estats per a contactes importats
   const [contacts, setContacts] = useState<PersonGroup[]>(JSON.parse(localStorage.getItem('gep_imported_contacts') || '[]'));
   const [contactSearch, setContactSearch] = useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [pendingContacts, setPendingContacts] = useState<PersonGroup[]>([]);
   
   // Ref per a l'input de fitxer ocult
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,23 +126,11 @@ function App() {
             return;
         }
         
-        // Combinar contactes existents amb els nous (evitar duplicats exactes)
-        const existingContacts = contacts || [];
-        const combinedContacts = [...existingContacts];
+        // Guardar contactes a l'estat pendent per mostrar el modal
+        setPendingContacts(newContacts);
+        setIsImportModalOpen(true);
         
-        newContacts.forEach(newContact => {
-          const isDuplicate = existingContacts.some(existing => 
-            existing.name === newContact.name && existing.email === newContact.email
-          );
-          if (!isDuplicate) {
-            combinedContacts.push(newContact);
-          }
-        });
-        
-        setContacts(combinedContacts);
-        localStorage.setItem('gep_imported_contacts', JSON.stringify(combinedContacts));
-        
-        alert(`S'han importat ${newContacts.length} contactes correctament!`);
+        alert(`S'han trobat ${newContacts.length} contactes al fitxer!`);
       } catch (error) {
         console.error('Error parsing file:', error);
         alert('Error al llegir el fitxer. Assegura\'t que té el format correcte.');
@@ -151,6 +142,41 @@ function App() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Funció per confirmar la fusió de contactes
+  const confirmMerge = () => {
+    // Combinar contactes existents amb els nous (evitar duplicats exactes)
+    const existingContacts = contacts || [];
+    const combinedContacts = [...existingContacts];
+    
+    pendingContacts.forEach(newContact => {
+      const isDuplicate = existingContacts.some(existing => 
+        existing.name === newContact.name && existing.email === newContact.email
+      );
+      if (!isDuplicate) {
+        combinedContacts.push(newContact);
+      }
+    });
+    
+    setContacts(combinedContacts);
+    localStorage.setItem('gep_imported_contacts', JSON.stringify(combinedContacts));
+    setIsImportModalOpen(false);
+    setPendingContacts([]);
+  };
+
+  // Funció per confirmar el reemplaçament de contactes
+  const confirmReplace = () => {
+    setContacts(pendingContacts);
+    localStorage.setItem('gep_imported_contacts', JSON.stringify(pendingContacts));
+    setIsImportModalOpen(false);
+    setPendingContacts([]);
+  };
+
+  // Funció per tancar el modal sense fer canvis
+  const closeImportModal = () => {
+    setIsImportModalOpen(false);
+    setPendingContacts([]);
   };
 
   // Funció per seleccionar un contacte
@@ -446,6 +472,15 @@ function App() {
           )}
         </div>
       </div>
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={closeImportModal}
+        onMerge={confirmMerge}
+        onReplace={confirmReplace}
+        newContactCount={pendingContacts.length}
+      />
     </div>
   );
 }
