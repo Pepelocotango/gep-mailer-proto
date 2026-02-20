@@ -10,6 +10,8 @@ GEP-MAILER és una eina d'escriptori especialitzada en la gestió de sol·licitu
 
 - **Generació automàtica de correus "Nested Mailto"**: Crea correus electrònics amb botons de resposta integrats (Sí/No/Parcial/Pendent) per facilitar la recollida ràpida de disponibilitats.
 
+- **Gestió intel·ligent d'importacions**: Detecció automàtica de contactes duplicats amb opcions de fusionar (afegir a l'agenda existent) o reemplaçar (esborrar l'agenda anterior).
+
 - **Importació d'agenda de contactes**: Suporta múltiples formats per importar contactes:
   - Formats GEP natius (`.gep`, `.json`)
   - Formats universals (`.csv`, `.vcf`)
@@ -18,7 +20,24 @@ GEP-MAILER és una eina d'escriptori especialitzada en la gestió de sol·licitu
 
 - **Interfície optimitzada de dues columnes**: Disseny eficient amb cerca ràpida integrada per localitzar contactes i esdeveniments instantàniament.
 
+- **Memòria d'historial**: L'aplicació recorda automàticament els últims esdeveniments creats i treballadors contactats per auto-emplenar els camps i estalviar temps en futurs correus.
+
 ## Instal·lació
+
+#### Importar Contactes
+Per importar la teva agenda de contactes, fes clic al botó **"Importar Contactes"** i selecciona un dels fitxers següents:
+
+- **JSON (.json)**: Format natiu de GEP
+- **GEP (.gep)**: Format específic de GEP  
+- **CSV (.csv)**: Format de valors separats per comes
+- **VCF (.vcf)**: Format de targetes virtual (vCard)
+
+Quan importis un fitxer, el sistema et demanarà si vols **fusionar** els contactes nous amb els existents o **reemplaçar** completament la teva agenda.
+
+#### Formats suportats:
+- **JSON/GEP**: Contingut complet amb noms, emails i rols
+- **CSV**: Fitxers de text amb columnes (nom, email, etc.)
+- **VCF**: Targetes virtuals estàndard de contactes
 
 ### Linux (AppImage)
 1. Descarregar l'arxiu `.AppImage` des de la secció de releases.

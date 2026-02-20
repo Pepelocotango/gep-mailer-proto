@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
-import { Send, User, Calendar, Mail, Type, Upload, Search } from 'lucide-react';
+import { Send, User, Calendar, Mail, Type, Upload, Search, Download } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
 import { ImportModal } from './components/ImportModal';
 
@@ -177,6 +177,32 @@ function App() {
   const closeImportModal = () => {
     setIsImportModalOpen(false);
     setPendingContacts([]);
+  };
+
+  // Funció per exportar contactes en format GEP
+  const handleExportContacts = () => {
+    const exportData = {
+      peopleGroups: contacts
+    };
+    
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Generar nom de fitxer amb data actual
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const filename = `contactes_gep_mailer_${dateStr}.gep`;
+    
+    // Crear enllaç de descàrrega
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Funció per seleccionar un contacte
@@ -426,13 +452,23 @@ function App() {
           className="hidden"
         />
         
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-        >
-          <Upload className="w-4 h-4" />
-          Importar Contactes
-        </button>
+        <Tooltip text="Importar des de .gep, .json, .csv o .vcf">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          >
+            <Upload className="w-4 h-4" />
+            Importar Contactes
+          </button>
+
+        <Tooltip text="Guardar llista actual compatible amb GEP">
+          <button
+            onClick={handleExportContacts}
+            className="w-full mb-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Exportar .GEP
+          </button>
 
         <div className="relative mb-4">
           <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
