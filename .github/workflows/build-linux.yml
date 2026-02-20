@@ -1,0 +1,25 @@
+name: Build Linux (AppImage)
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm install
+      # Sanitize branch name for filename compatibility
+      - name: Prepare Name Variables
+        run: |
+          SAFE_BRANCH=$(echo "${{ github.ref_name }}" | tr '/' '_')
+          echo "BRANCH_NAME=$SAFE_BRANCH" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Build
+        run: npm run build:linux -- --publish never
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GEP-MAILER-Linux
+          path: dist/*.AppImage

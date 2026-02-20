@@ -1,15 +1,18 @@
 {
-  "name": "gep-mailer-proto",
+  "name": "gep-mailer",
   "private": true,
-  "version": "0.0.0",
-  "description": "Nested Mailto RSVP system prototype for GEP",
-  "author": "GEP Development Team",
+  "version": "1.0.0",
+  "description": "Eina d'escriptori per a la gestió de sol·licituds de disponibilitat de personal mitjançant correu electrònic.",
+  "author": "Pep",
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:linux": "npm run build && electron-builder --linux AppImage",
+    "build:linux": "cross-env BRANCH_NAME=local BUILD_NUMBER=dev npm run build && electron-builder --linux",
+    "build:win": "cross-env BRANCH_NAME=local BUILD_NUMBER=dev npm run build && electron-builder --win",
+    "build:mac": "cross-env BRANCH_NAME=local BUILD_NUMBER=dev npm run build && electron-builder --mac",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
@@ -37,19 +40,31 @@
   }
   ,
   "build": {
-    "appId": "com.gep.mailer.proto",
-    "productName": "GEPMailerProto",
+    "appId": "com.gep.mailer",
+    "productName": "GEP-MAILER",
     "directories": {
-      "output": "dist-electron"
+      "output": "dist"
     },
     "files": [
       "dist/**/*",
-      "electron/**/*",
-      "package.json"
+      "main.cjs",
+      "preload.cjs"
     ],
     "linux": {
       "target": "AppImage",
-      "category": "Office"
+      "category": "Office",
+      "artifactName": "GEP-MAILER_v${version}-${env.BRANCH_NAME}-build${env.BUILD_NUMBER}-Linux.${ext}"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico",
+      "artifactName": "GEP-MAILER_v${version}-${env.BRANCH_NAME}-build${env.BUILD_NUMBER}-Windows-Setup.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity",
+      "icon": "public/icon.icns",
+      "artifactName": "GEP-MAILER_v${version}-${env.BRANCH_NAME}-build${env.BUILD_NUMBER}-macOS.${ext}"
     }
   }
 }

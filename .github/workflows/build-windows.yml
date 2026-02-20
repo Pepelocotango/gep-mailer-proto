@@ -1,0 +1,26 @@
+name: Build Windows (EXE)
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm install
+      # PowerShell syntax for variable setting
+      - name: Prepare Name Variables
+        shell: pwsh
+        run: |
+          $safeBranch = "${{ github.ref_name }}" -replace '/', '_'
+          echo "BRANCH_NAME=$safeBranch" >> $env:GITHUB_ENV
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
+      - name: Build
+        run: npm run build:win -- --publish never
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GEP-MAILER-Windows
+          path: dist/*.exe

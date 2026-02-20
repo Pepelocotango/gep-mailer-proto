@@ -1,0 +1,24 @@
+name: Build macOS (DMG)
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm install
+      - name: Prepare Name Variables
+        run: |
+          SAFE_BRANCH=$(echo "${{ github.ref_name }}" | tr '/' '_')
+          echo "BRANCH_NAME=$SAFE_BRANCH" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Build
+        run: npm run build:mac -- --publish never
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GEP-MAILER-macOS
+          path: dist/*.dmg
