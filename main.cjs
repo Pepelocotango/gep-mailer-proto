@@ -1,10 +1,5 @@
-import { app, BrowserWindow } from 'electron';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Recrear __dirname per ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -13,6 +8,8 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
+      // Note: In a future update we should align this with GEP's preload security, 
+      // but for GEP-MAILER v1.0.0 we keep nodeIntegration for simplicity.
     }
   });
 
@@ -23,12 +20,14 @@ const createWindow = () => {
   if (process.env.NODE_ENV === 'development') {
     win.loadURL('http://localhost:5173');
   } else {
-    win.loadFile(path.join(__dirname, '../dist/index.html'));
+    // In production, the file is in dist/index.html relative to root
+    win.loadFile(path.join(__dirname, 'dist', 'index.html'));
   }
 };
 
 app.whenReady().then(() => {
   createWindow();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

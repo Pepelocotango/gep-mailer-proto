@@ -1,7 +1,7 @@
 === PROJECTE CONCATENAT ===
 Projecte: gep-mailer-proto
 Branca: main
-Data: 2026-02-20 12:02:09
+Data: 2026-02-20 12:59:59
 ==================================================
 
 --- START: ../gep-mailer-proto/.gitignore -- branca main ---
@@ -98,7 +98,7 @@ Per a informes d'errors, sol·licituds de funcions o contribucions, si us plau u
   "author": "Pep",
   "license": "GPL-3.0-or-later",
   "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -119,15 +119,15 @@ Per a informes d'errors, sol·licituds de funcions o contribucions, si us plau u
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
-    "autoprefixer": "^10.4.24",
-    "concurrently": "^9.2.1",
+    "autoprefixer": "10.4.21",
+    "concurrently": "8.2.2",
     "cross-env": "^10.1.0",
-    "electron": "^40.6.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "wait-on": "^9.0.4",
+    "electron": "38.1.1",
+    "postcss": "8.5.4",
+    "tailwindcss": "3.4.17",
+    "typescript": "~5.5.3",
+    "vite": "6.4.1",
+    "wait-on": "7.2.0",
     "electron-builder": "^24.13.3"
   }
   ,
@@ -139,8 +139,7 @@ Per a informes d'errors, sol·licituds de funcions o contribucions, si us plau u
     },
     "files": [
       "dist/**/*",
-      "main.cjs",
-      "preload.cjs"
+      "main.cjs"
     ],
     "linux": {
       "target": "AppImage",
@@ -263,7 +262,7 @@ jobs:
           echo "BRANCH_NAME=$SAFE_BRANCH" >> $GITHUB_ENV
           echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
       - name: Build
-        run: npm run build:linux -- --publish never
+        run: npm run build && npx electron-builder --linux --x64 --publish never
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -291,7 +290,7 @@ jobs:
           echo "BRANCH_NAME=$SAFE_BRANCH" >> $GITHUB_ENV
           echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
       - name: Build
-        run: npm run build:mac -- --publish never
+        run: npm run build && npx electron-builder --mac --x64 --publish never
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -320,7 +319,7 @@ jobs:
           echo "BRANCH_NAME=$safeBranch" >> $env:GITHUB_ENV
           echo "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
       - name: Build
-        run: npm run build:win -- --publish never
+        run: npm run build && npx electron-builder --win --x64 --publish never
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -334,6 +333,7 @@ import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
 import { Send, User, Calendar, Mail, Type, Upload, Search } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
+import { ImportModal } from './components/ImportModal';
 
 interface WorkerProfile {
   name: string;
@@ -360,6 +360,8 @@ function App() {
   // 2. Estats per a contactes importats
   const [contacts, setContacts] = useState<PersonGroup[]>(JSON.parse(localStorage.getItem('gep_imported_contacts') || '[]'));
   const [contactSearch, setContactSearch] = useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [pendingContacts, setPendingContacts] = useState<PersonGroup[]>([]);
   
   // Ref per a l'input de fitxer ocult
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -455,23 +457,11 @@ function App() {
             return;
         }
         
-        // Combinar contactes existents amb els nous (evitar duplicats exactes)
-        const existingContacts = contacts || [];
-        const combinedContacts = [...existingContacts];
+        // Guardar contactes a l'estat pendent per mostrar el modal
+        setPendingContacts(newContacts);
+        setIsImportModalOpen(true);
         
-        newContacts.forEach(newContact => {
-          const isDuplicate = existingContacts.some(existing => 
-            existing.name === newContact.name && existing.email === newContact.email
-          );
-          if (!isDuplicate) {
-            combinedContacts.push(newContact);
-          }
-        });
-        
-        setContacts(combinedContacts);
-        localStorage.setItem('gep_imported_contacts', JSON.stringify(combinedContacts));
-        
-        alert(`S'han importat ${newContacts.length} contactes correctament!`);
+        alert(`S'han trobat ${newContacts.length} contactes al fitxer!`);
       } catch (error) {
         console.error('Error parsing file:', error);
         alert('Error al llegir el fitxer. Assegura\'t que té el format correcte.');
@@ -483,6 +473,41 @@ function App() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Funció per confirmar la fusió de contactes
+  const confirmMerge = () => {
+    // Combinar contactes existents amb els nous (evitar duplicats exactes)
+    const existingContacts = contacts || [];
+    const combinedContacts = [...existingContacts];
+    
+    pendingContacts.forEach(newContact => {
+      const isDuplicate = existingContacts.some(existing => 
+        existing.name === newContact.name && existing.email === newContact.email
+      );
+      if (!isDuplicate) {
+        combinedContacts.push(newContact);
+      }
+    });
+    
+    setContacts(combinedContacts);
+    localStorage.setItem('gep_imported_contacts', JSON.stringify(combinedContacts));
+    setIsImportModalOpen(false);
+    setPendingContacts([]);
+  };
+
+  // Funció per confirmar el reemplaçament de contactes
+  const confirmReplace = () => {
+    setContacts(pendingContacts);
+    localStorage.setItem('gep_imported_contacts', JSON.stringify(pendingContacts));
+    setIsImportModalOpen(false);
+    setPendingContacts([]);
+  };
+
+  // Funció per tancar el modal sense fer canvis
+  const closeImportModal = () => {
+    setIsImportModalOpen(false);
+    setPendingContacts([]);
   };
 
   // Funció per seleccionar un contacte
@@ -778,6 +803,15 @@ function App() {
           )}
         </div>
       </div>
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={closeImportModal}
+        onMerge={confirmMerge}
+        onReplace={confirmReplace}
+        newContactCount={pendingContacts.length}
+      />
     </div>
   );
 }
@@ -919,6 +953,56 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 )
 
 --- END: ../gep-mailer-proto/src/main.tsx -- branca main ---
+
+--- START: ../gep-mailer-proto/src/components/ImportModal.tsx -- branca main ---
+interface ImportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onMerge: () => void;
+  onReplace: () => void;
+  newContactCount: number;
+}
+
+export function ImportModal({ isOpen, onClose, onMerge, onReplace, newContactCount }: ImportModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Importar Contactes</h2>
+        
+        <p className="text-gray-700 mb-6">
+          S'han trobat {newContactCount} contactes al fitxer. Què vols fer?
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 font-medium"
+          >
+            Cancel·lar
+          </button>
+          
+          <button
+            onClick={onReplace}
+            className="flex-1 px-4 py-2 text-white bg-orange-500 hover:bg-orange-600 rounded-md transition-colors duration-200 font-medium"
+          >
+            Reemplaçar
+          </button>
+          
+          <button
+            onClick={onMerge}
+            className="flex-1 px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200 font-medium"
+          >
+            Fusionar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+--- END: ../gep-mailer-proto/src/components/ImportModal.tsx -- branca main ---
 
 --- START: ../gep-mailer-proto/src/components/Tooltip.tsx -- branca main ---
 import React, { useState } from 'react';
