@@ -32,7 +32,56 @@ function App() {
   // Ref per a l'input de fitxer ocult
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Funció per importar contactes des d'un fitxer JSON
+  // Parser per format CSV
+  const parseCSV = (text: string): PersonGroup[] => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const nameIndex = headers.findIndex(h => h.includes('name'));
+    const emailIndex = headers.findIndex(h => h.includes('email'));
+    
+    if (nameIndex === -1) return [];
+    
+    const contacts: PersonGroup[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values[nameIndex]) {
+        contacts.push({
+          id: `import-csv-${Math.random().toString(36).substr(2, 9)}`,
+          name: values[nameIndex],
+          email: emailIndex !== -1 ? values[emailIndex] : undefined,
+          role: undefined
+        });
+      }
+    }
+    
+    return contacts;
+  };
+
+  // Parser per format VCF (vCard)
+  const parseVCF = (text: string): PersonGroup[] => {
+    const vcardBlocks = text.split('BEGIN:VCARD').filter(block => block.includes('END:VCARD'));
+    const contacts: PersonGroup[] = [];
+    
+    vcardBlocks.forEach(block => {
+      const nameMatch = block.match(/^FN:(.+)$/m);
+      const emailMatch = block.match(/^EMAIL.*:(.+)$/m);
+      
+      if (nameMatch) {
+        contacts.push({
+          id: `import-vcf-${Math.random().toString(36).substr(2, 9)}`,
+          name: nameMatch[1].trim(),
+          email: emailMatch ? emailMatch[1].trim() : undefined,
+          role: undefined
+        });
+      }
+    });
+    
+    return contacts;
+  };
+
+  // Funció per importar contactes des d'un fitxer (JSON, GEP, CSV, VCF)
   const handleImportContacts = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -41,22 +90,59 @@ function App() {
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const data = JSON.parse(content);
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+        let newContacts: PersonGroup[] = [];
         
-        // Extreure l'array de contactes (pot ser directe o dins de 'peopleGroups')
-        let importedContacts: PersonGroup[] = [];
-        if (data.peopleGroups && Array.isArray(data.peopleGroups)) {
-          importedContacts = data.peopleGroups;
-        } else if (Array.isArray(data)) {
-          importedContacts = data;
+        switch (fileExtension) {
+          case 'json':
+          case 'gep':
+            const data = JSON.parse(content);
+            // Extreure l'array de contactes (pot ser directe o dins de 'peopleGroups')
+            if (data.peopleGroups && Array.isArray(data.peopleGroups)) {
+              newContacts = data.peopleGroups;
+            } else if (Array.isArray(data)) {
+              newContacts = data;
+            }
+            // Assegurar que tots els contactes tinguin id
+            newContacts = newContacts.map(contact => ({
+              ...contact,
+              id: contact.id || `import-json-${Math.random().toString(36).substr(2, 9)}`
+            }));
+            break;
+            
+          case 'csv':
+            newContacts = parseCSV(content);
+            break;
+            
+          case 'vcf':
+            newContacts = parseVCF(content);
+            break;
+            
+          default:
+            alert('Format de fitxer no suportat. Utilitza .json, .gep, .csv o .vcf');
+            return;
         }
         
-        // Importar tots els contactes (sense filtrar per email)
-        setContacts(importedContacts);
-        localStorage.setItem('gep_imported_contacts', JSON.stringify(importedContacts));
+        // Combinar contactes existents amb els nous (evitar duplicats exactes)
+        const existingContacts = contacts || [];
+        const combinedContacts = [...existingContacts];
+        
+        newContacts.forEach(newContact => {
+          const isDuplicate = existingContacts.some(existing => 
+            existing.name === newContact.name && existing.email === newContact.email
+          );
+          if (!isDuplicate) {
+            combinedContacts.push(newContact);
+          }
+        });
+        
+        setContacts(combinedContacts);
+        localStorage.setItem('gep_imported_contacts', JSON.stringify(combinedContacts));
+        
+        alert(`S'han importat ${newContacts.length} contactes correctament!`);
       } catch (error) {
-        console.error('Error parsing JSON file:', error);
-        alert('Error al llegir el fitxer JSON. Assegura\'t que té el format correcte.');
+        console.error('Error parsing file:', error);
+        alert('Error al llegir el fitxer. Assegura\'t que té el format correcte.');
       }
     };
     reader.readAsText(file);
@@ -310,7 +396,7 @@ function App() {
           type="file"
           ref={fileInputRef}
           onChange={handleImportContacts}
-          accept=".json"
+          accept=".json,.gep,.csv,.vcf"
           className="hidden"
         />
         
@@ -319,7 +405,7 @@ function App() {
           className="w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
         >
           <Upload className="w-4 h-4" />
-          Importar JSON
+          Importar Contactes
         </button>
 
         <div className="relative mb-4">
