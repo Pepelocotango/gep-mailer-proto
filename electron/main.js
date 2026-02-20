@@ -16,6 +16,9 @@ const createWindow = () => {
     }
   });
 
+  // Maximize window on startup
+  win.maximize();
+
   // Load the appropriate URL based on environment
   if (process.env.NODE_ENV === 'development') {
     win.loadURL('http://localhost:5173');

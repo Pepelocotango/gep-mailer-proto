@@ -1,11 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
-import { Send, User, Calendar, Mail, Type } from 'lucide-react';
+import { Send, User, Calendar, Mail, Type, Upload, Search } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
 
 interface WorkerProfile {
   name: string;
   email: string;
+}
+
+interface PersonGroup {
+  id: string;
+  name: string;
+  email?: string;
+  role?: string;
 }
 
 function App() {
@@ -17,6 +24,62 @@ function App() {
   const [endDate, setEndDate] = useState('');
   const [workerName, setWorkerName] = useState('');
   const [workerEmail, setWorkerEmail] = useState('');
+  
+  // 2. Estats per a contactes importats
+  const [contacts, setContacts] = useState<PersonGroup[]>(JSON.parse(localStorage.getItem('gep_imported_contacts') || '[]'));
+  const [contactSearch, setContactSearch] = useState('');
+  
+  // Ref per a l'input de fitxer ocult
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Funció per importar contactes des d'un fitxer JSON
+  const handleImportContacts = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const data = JSON.parse(content);
+        
+        // Extreure l'array de contactes (pot ser directe o dins de 'peopleGroups')
+        let importedContacts: PersonGroup[] = [];
+        if (data.peopleGroups && Array.isArray(data.peopleGroups)) {
+          importedContacts = data.peopleGroups;
+        } else if (Array.isArray(data)) {
+          importedContacts = data;
+        }
+        
+        // Filtrar contactes sense email (opcional, però recomanat)
+        const filteredContacts = importedContacts.filter(contact => contact.email);
+        
+        setContacts(filteredContacts);
+        localStorage.setItem('gep_imported_contacts', JSON.stringify(filteredContacts));
+      } catch (error) {
+        console.error('Error parsing JSON file:', error);
+        alert('Error al llegir el fitxer JSON. Assegura\'t que té el format correcte.');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Resetear l'input per permetre seleccionar el mateix fitxer de nou
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Funció per seleccionar un contacte
+  const handleSelectContact = (person: PersonGroup) => {
+    setWorkerName(person.name);
+    setWorkerEmail(person.email || '');
+  };
+
+  // Filtrar contactes per nom o rol
+  const filteredContacts = contacts.filter(contact => 
+    contact.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+    (contact.role && contact.role.toLowerCase().includes(contactSearch.toLowerCase()))
+  );
 
   // 2. Estats per la memòria (desplegables)
   const [historyProfiles, setHistoryProfiles] = useState<WorkerProfile[]>(JSON.parse(localStorage.getItem('gep_history_profiles') || '[]'));
@@ -89,8 +152,9 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen p-8 flex flex-col items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg border border-gray-200">
+    <div className="flex h-screen bg-gray-100 p-4 gap-4">
+      {/* Left Column - Form */}
+      <div className="flex-1 bg-white p-6 rounded-xl shadow-lg overflow-y-auto">
         <h1 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
           <Mail className="w-6 h-6 text-blue-600" />
           Prototip Mailer GEP
@@ -239,6 +303,63 @@ function App() {
             </button>
           </Tooltip>
 
+        </div>
+      </div>
+
+      {/* Right Column - Contact List */}
+      <div className="w-80 bg-white p-4 rounded-xl shadow-lg flex flex-col">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImportContacts}
+          accept=".json"
+          className="hidden"
+        />
+        
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+        >
+          <Upload className="w-4 h-4" />
+          Importar JSON
+        </button>
+
+        <div className="relative mb-4">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+          <input
+            type="text"
+            value={contactSearch}
+            onChange={e => setContactSearch(e.target.value)}
+            placeholder="Buscar contactes..."
+            className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-2">
+          {filteredContacts.map((contact) => (
+            <button
+              key={contact.id}
+              onClick={() => handleSelectContact(contact)}
+              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            >
+              <div className="font-medium text-gray-800">{contact.name}</div>
+              {contact.role && (
+                <div className="text-sm text-gray-500">{contact.role}</div>
+              )}
+              {contact.email && (
+                <div className="text-sm text-blue-600 truncate">{contact.email}</div>
+              )}
+            </button>
+          ))}
+          
+          {filteredContacts.length === 0 && (
+            <div className="text-center text-gray-500 py-8">
+              {contacts.length === 0 
+                ? "No hi ha contactes importats. Importa un fitxer JSON."
+                : "No s'han trobat contactes amb aquesta cerca."
+              }
+            </div>
+          )}
         </div>
       </div>
     </div>
