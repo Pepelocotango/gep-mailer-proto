@@ -625,7 +625,10 @@ function App() {
 
             {/* Action Row */}
             <div className="grid grid-cols-2 gap-4">
-              <Tooltip text="Guarda o actualitza aquest contacte a la teva llista local">
+              <Tooltip 
+                text="Guarda o actualitza aquest contacte a la teva llista local" 
+                className="w-full"
+              >
                 <button 
                   onClick={handleUpdateContact}
                   className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -634,7 +637,10 @@ function App() {
                   Guardar a la llista
                 </button>
               </Tooltip>
-              <Tooltip text="Buida els camps per crear o buscar un nou contacte">
+              <Tooltip 
+                text="Buida els camps per crear o buscar un nou contacte" 
+                className="w-full"
+              >
                 <button 
                   onClick={handleClearForm}
                   className="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"

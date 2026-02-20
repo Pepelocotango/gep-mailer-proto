@@ -3,14 +3,15 @@ import React, { useState } from 'react';
 interface TooltipProps {
   text: string;
   children: React.ReactNode;
+  className?: string; // Add this
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ text, children }) => {
+export const Tooltip: React.FC<TooltipProps> = ({ text, children, className = "" }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
     <div 
-      className="relative"
+      className={`relative ${className}`}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
     >
