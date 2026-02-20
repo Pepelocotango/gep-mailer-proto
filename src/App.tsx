@@ -51,11 +51,9 @@ function App() {
           importedContacts = data;
         }
         
-        // Filtrar contactes sense email (opcional, però recomanat)
-        const filteredContacts = importedContacts.filter(contact => contact.email);
-        
-        setContacts(filteredContacts);
-        localStorage.setItem('gep_imported_contacts', JSON.stringify(filteredContacts));
+        // Importar tots els contactes (sense filtrar per email)
+        setContacts(importedContacts);
+        localStorage.setItem('gep_imported_contacts', JSON.stringify(importedContacts));
       } catch (error) {
         console.error('Error parsing JSON file:', error);
         alert('Error al llegir el fitxer JSON. Assegura\'t que té el format correcte.');
