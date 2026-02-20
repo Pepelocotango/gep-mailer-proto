@@ -1,7 +1,7 @@
 === PROJECTE CONCATENAT ===
 Projecte: gep-mailer-proto
 Branca: main
-Data: 2026-02-20 11:03:47
+Data: 2026-02-20 12:02:09
 ==================================================
 
 --- START: ../gep-mailer-proto/.gitignore -- branca main ---
@@ -14,8 +14,61 @@ node_modules
 --- END: ../gep-mailer-proto/.gitignore -- branca main ---
 
 --- START: ../gep-mailer-proto/README.md -- branca main ---
-# gep-mailer-proto
-prototip mails automatitzats per personal
+# GEP-MAILER v1.0.0
+
+Aplicació auxiliar de l'ecosistema GEP dissenyada per agilitzar la comunicació amb el personal tècnic.
+
+## Descripció
+
+GEP-MAILER és una eina d'escriptori especialitzada en la gestió de sol·licituds de disponibilitat de personal mitjançant correu electrònic. Forma part de l'ecosistema GEP i està optimitzada per simplificar els processos de comunicació amb equips tècnics, oferint una interfície intuïtiva i funcionalitats avançades per a la gestió de contactes i esdeveniments.
+
+## Funcionalitats Clau
+
+- **Generació automàtica de correus "Nested Mailto"**: Crea correus electrònics amb botons de resposta integrats (Sí/No/Parcial/Pendent) per facilitar la recollida ràpida de disponibilitats.
+
+- **Importació d'agenda de contactes**: Suporta múltiples formats per importar contactes:
+  - Formats GEP natius (`.gep`, `.json`)
+  - Formats universals (`.csv`, `.vcf`)
+
+- **Suport intel·ligent per a esdeveniments de múltiples dies**: Gestiona esdeveniments que s'estenen al llarg de diversos dies amb optimització automàtica de la programació.
+
+- **Interfície optimitzada de dues columnes**: Disseny eficient amb cerca ràpida integrada per localitzar contactes i esdeveniments instantàniament.
+
+## Instal·lació
+
+### Linux (AppImage)
+1. Descarregar l'arxiu `.AppImage` des de la secció de releases.
+2. Donar permisos d'execució: `chmod +x GEP-MAILER-*.AppImage`
+3. Executar directament: `./GEP-MAILER-*.AppImage`
+
+### Windows (Executable)
+1. Descarregar l'instal·lador `.exe` des de la secció de releases.
+2. Executar l'instal·lador i seguir les instruccions de l'assistent.
+3. L'aplicació estarà disponible al menú Inici.
+
+### macOS (DMG)
+1. Descarregar l'arxiu `.dmg` des de la secció de releases.
+2. Obrir l'arxiu DMG i arrossegar GEP-MAILER a la carpeta d'aplicacions.
+3. Executar des de Launchpad o la carpeta d'aplicacions.
+
+## Requisits del Sistema
+
+- **Sistema Operatiu**: Linux, Windows 10+, o macOS 10.14+
+- **Memòria RAM**: Mínim 4 GB
+- **Espai en disc**: 500 MB disponibles
+- **Connexió a Internet**: Requerida per a la importació de contactes i enviament de correus
+
+## Llicència
+
+Aquest projecte està llicenciat sota la GNU General Public License v3.0. Veure l'arxiu [LICENSE](LICENSE) per als detalls complets.
+
+## Suport i Contribucions
+
+Per a informes d'errors, sol·licituds de funcions o contribucions, si us plau utilitzi el sistema d'issues del repositori de GitHub.
+
+---
+
+**GEP-MAILER** - Part de l'ecosistema GEP per a una gestió eficient del personal tècnic.
 
 --- END: ../gep-mailer-proto/README.md -- branca main ---
 
@@ -38,17 +91,20 @@ prototip mails automatitzats per personal
 
 --- START: ../gep-mailer-proto/package.json -- branca main ---
 {
-  "name": "gep-mailer-proto",
+  "name": "gep-mailer",
   "private": true,
-  "version": "0.0.0",
-  "description": "Nested Mailto RSVP system prototype for GEP",
-  "author": "GEP Development Team",
+  "version": "1.0.0",
+  "description": "Eina d'escriptori per a la gestió de sol·licituds de disponibilitat de personal mitjançant correu electrònic.",
+  "author": "Pep",
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:linux": "npm run build && electron-builder --linux AppImage",
+    "build:linux": "cross-env BRANCH_NAME=local BUILD_NUMBER=dev npm run build && electron-builder --linux",
+    "build:win": "cross-env BRANCH_NAME=local BUILD_NUMBER=dev npm run build && electron-builder --win",
+    "build:mac": "cross-env BRANCH_NAME=local BUILD_NUMBER=dev npm run build && electron-builder --mac",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
@@ -76,19 +132,31 @@ prototip mails automatitzats per personal
   }
   ,
   "build": {
-    "appId": "com.gep.mailer.proto",
-    "productName": "GEPMailerProto",
+    "appId": "com.gep.mailer",
+    "productName": "GEP-MAILER",
     "directories": {
-      "output": "dist-electron"
+      "output": "dist"
     },
     "files": [
       "dist/**/*",
-      "electron/**/*",
-      "package.json"
+      "main.cjs",
+      "preload.cjs"
     ],
     "linux": {
       "target": "AppImage",
-      "category": "Office"
+      "category": "Office",
+      "artifactName": "GEP-MAILER_v${version}-${env.BRANCH_NAME}-build${env.BUILD_NUMBER}-Linux.${ext}"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico",
+      "artifactName": "GEP-MAILER_v${version}-${env.BRANCH_NAME}-build${env.BUILD_NUMBER}-Windows-Setup.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity",
+      "icon": "public/icon.icns",
+      "artifactName": "GEP-MAILER_v${version}-${env.BRANCH_NAME}-build${env.BUILD_NUMBER}-macOS.${ext}"
     }
   }
 }
@@ -175,6 +243,92 @@ export default defineConfig({
 
 --- END: ../gep-mailer-proto/vite.config.ts -- branca main ---
 
+--- START: ../gep-mailer-proto/.github/workflows/build-linux.yml -- branca main ---
+name: Build Linux (AppImage)
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm install
+      # Sanitize branch name for filename compatibility
+      - name: Prepare Name Variables
+        run: |
+          SAFE_BRANCH=$(echo "${{ github.ref_name }}" | tr '/' '_')
+          echo "BRANCH_NAME=$SAFE_BRANCH" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Build
+        run: npm run build:linux -- --publish never
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GEP-MAILER-Linux
+          path: dist/*.AppImage
+
+--- END: ../gep-mailer-proto/.github/workflows/build-linux.yml -- branca main ---
+
+--- START: ../gep-mailer-proto/.github/workflows/build-macos.yml -- branca main ---
+name: Build macOS (DMG)
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm install
+      - name: Prepare Name Variables
+        run: |
+          SAFE_BRANCH=$(echo "${{ github.ref_name }}" | tr '/' '_')
+          echo "BRANCH_NAME=$SAFE_BRANCH" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Build
+        run: npm run build:mac -- --publish never
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GEP-MAILER-macOS
+          path: dist/*.dmg
+--- END: ../gep-mailer-proto/.github/workflows/build-macos.yml -- branca main ---
+
+--- START: ../gep-mailer-proto/.github/workflows/build-windows.yml -- branca main ---
+name: Build Windows (EXE)
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm install
+      # PowerShell syntax for variable setting
+      - name: Prepare Name Variables
+        shell: pwsh
+        run: |
+          $safeBranch = "${{ github.ref_name }}" -replace '/', '_'
+          echo "BRANCH_NAME=$safeBranch" >> $env:GITHUB_ENV
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
+      - name: Build
+        run: npm run build:win -- --publish never
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GEP-MAILER-Windows
+          path: dist/*.exe
+
+--- END: ../gep-mailer-proto/.github/workflows/build-windows.yml -- branca main ---
+
 --- START: ../gep-mailer-proto/src/App.tsx -- branca main ---
 import { useState, useEffect, useRef } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
@@ -210,7 +364,56 @@ function App() {
   // Ref per a l'input de fitxer ocult
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Funció per importar contactes des d'un fitxer JSON
+  // Parser per format CSV
+  const parseCSV = (text: string): PersonGroup[] => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const nameIndex = headers.findIndex(h => h.includes('name'));
+    const emailIndex = headers.findIndex(h => h.includes('email'));
+    
+    if (nameIndex === -1) return [];
+    
+    const contacts: PersonGroup[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values[nameIndex]) {
+        contacts.push({
+          id: `import-csv-${Math.random().toString(36).substr(2, 9)}`,
+          name: values[nameIndex],
+          email: emailIndex !== -1 ? values[emailIndex] : undefined,
+          role: undefined
+        });
+      }
+    }
+    
+    return contacts;
+  };
+
+  // Parser per format VCF (vCard)
+  const parseVCF = (text: string): PersonGroup[] => {
+    const vcardBlocks = text.split('BEGIN:VCARD').filter(block => block.includes('END:VCARD'));
+    const contacts: PersonGroup[] = [];
+    
+    vcardBlocks.forEach(block => {
+      const nameMatch = block.match(/^FN:(.+)$/m);
+      const emailMatch = block.match(/^EMAIL.*:(.+)$/m);
+      
+      if (nameMatch) {
+        contacts.push({
+          id: `import-vcf-${Math.random().toString(36).substr(2, 9)}`,
+          name: nameMatch[1].trim(),
+          email: emailMatch ? emailMatch[1].trim() : undefined,
+          role: undefined
+        });
+      }
+    });
+    
+    return contacts;
+  };
+
+  // Funció per importar contactes des d'un fitxer (JSON, GEP, CSV, VCF)
   const handleImportContacts = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -219,24 +422,59 @@ function App() {
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const data = JSON.parse(content);
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+        let newContacts: PersonGroup[] = [];
         
-        // Extreure l'array de contactes (pot ser directe o dins de 'peopleGroups')
-        let importedContacts: PersonGroup[] = [];
-        if (data.peopleGroups && Array.isArray(data.peopleGroups)) {
-          importedContacts = data.peopleGroups;
-        } else if (Array.isArray(data)) {
-          importedContacts = data;
+        switch (fileExtension) {
+          case 'json':
+          case 'gep':
+            const data = JSON.parse(content);
+            // Extreure l'array de contactes (pot ser directe o dins de 'peopleGroups')
+            if (data.peopleGroups && Array.isArray(data.peopleGroups)) {
+              newContacts = data.peopleGroups;
+            } else if (Array.isArray(data)) {
+              newContacts = data;
+            }
+            // Assegurar que tots els contactes tinguin id
+            newContacts = newContacts.map(contact => ({
+              ...contact,
+              id: contact.id || `import-json-${Math.random().toString(36).substr(2, 9)}`
+            }));
+            break;
+            
+          case 'csv':
+            newContacts = parseCSV(content);
+            break;
+            
+          case 'vcf':
+            newContacts = parseVCF(content);
+            break;
+            
+          default:
+            alert('Format de fitxer no suportat. Utilitza .json, .gep, .csv o .vcf');
+            return;
         }
         
-        // Filtrar contactes sense email (opcional, però recomanat)
-        const filteredContacts = importedContacts.filter(contact => contact.email);
+        // Combinar contactes existents amb els nous (evitar duplicats exactes)
+        const existingContacts = contacts || [];
+        const combinedContacts = [...existingContacts];
         
-        setContacts(filteredContacts);
-        localStorage.setItem('gep_imported_contacts', JSON.stringify(filteredContacts));
+        newContacts.forEach(newContact => {
+          const isDuplicate = existingContacts.some(existing => 
+            existing.name === newContact.name && existing.email === newContact.email
+          );
+          if (!isDuplicate) {
+            combinedContacts.push(newContact);
+          }
+        });
+        
+        setContacts(combinedContacts);
+        localStorage.setItem('gep_imported_contacts', JSON.stringify(combinedContacts));
+        
+        alert(`S'han importat ${newContacts.length} contactes correctament!`);
       } catch (error) {
-        console.error('Error parsing JSON file:', error);
-        alert('Error al llegir el fitxer JSON. Assegura\'t que té el format correcte.');
+        console.error('Error parsing file:', error);
+        alert('Error al llegir el fitxer. Assegura\'t que té el format correcte.');
       }
     };
     reader.readAsText(file);
@@ -490,7 +728,7 @@ function App() {
           type="file"
           ref={fileInputRef}
           onChange={handleImportContacts}
-          accept=".json"
+          accept=".json,.gep,.csv,.vcf"
           className="hidden"
         />
         
@@ -499,7 +737,7 @@ function App() {
           className="w-full mb-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
         >
           <Upload className="w-4 h-4" />
-          Importar JSON
+          Importar Contactes
         </button>
 
         <div className="relative mb-4">

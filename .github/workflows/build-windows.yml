@@ -18,7 +18,7 @@ jobs:
           echo "BRANCH_NAME=$safeBranch" >> $env:GITHUB_ENV
           echo "BUILD_NUMBER=${{ github.run_number }}" >> $env:GITHUB_ENV
       - name: Build
-        run: npm run build:win -- --publish never
+        run: npm run build && npx electron-builder --win --x64 --publish never
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
