@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { generateMailtoLink, formatDateDMY } from './emailGenerator';
 import { Send, User, Calendar, Mail, Type } from 'lucide-react';
+import { Tooltip } from './components/Tooltip';
 
 interface WorkerProfile {
   name: string;
@@ -99,114 +100,144 @@ function App() {
           
           {/* Dades del Manager */}
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
-            <label className="block text-sm font-medium text-blue-800 mb-1">
-              El teu Email (Aquesta és l'adreça on t'arribaran les respostes)
-            </label>
-            <input 
-              type="email" 
-              value={managerEmail} 
-              onChange={e => setManagerEmail(e.target.value)}
-              placeholder="ex: produccio@elteatre.cat"
-              className="w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400"
-            />
+            <Tooltip text="L'adreça on rebràs les respostes dels treballadors">
+              <label className="block text-sm font-medium text-blue-800 mb-1">
+                El teu Email (Aquesta és l'adreça on t'arribaran les respostes)
+              </label>
+            </Tooltip>
+            <Tooltip text="L'adreça on rebràs les respostes dels treballadors">
+              <input 
+                type="email" 
+                value={managerEmail} 
+                onChange={e => setManagerEmail(e.target.value)}
+                placeholder="ex: produccio@elteatre.cat"
+                className="w-full p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 bg-white placeholder-gray-400"
+              />
+            </Tooltip>
           </div>
 
           {/* Dades de l'Esdeveniment i Assumpte */}
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
-              <input 
-                type="text" 
-                list="events-list"
-                value={eventName} 
-                onChange={e => setEventName(e.target.value)}
-                placeholder="ex: Concert Festa Major"
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-              />
+              <Tooltip text="Nom de l'esdeveniment o bolo">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Esdeveniment</label>
+              </Tooltip>
+              <Tooltip text="Nom de l'esdeveniment o bolo">
+                <input 
+                  type="text" 
+                  list="events-list"
+                  value={eventName} 
+                  onChange={e => setEventName(e.target.value)}
+                  placeholder="ex: Concert Festa Major"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                />
+              </Tooltip>
               <datalist id="events-list">
                 {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
               </datalist>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data Inici</label>
-                <div className="relative">
-                  <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                  <input 
-                    type="date" 
-                    value={startDate} 
-                    onChange={e => setStartDate(e.target.value)}
-                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  />
-                </div>
+                <Tooltip text="Primer dia de l'esdeveniment">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Data Inici</label>
+                </Tooltip>
+                <Tooltip text="Primer dia de l'esdeveniment">
+                  <div className="relative">
+                    <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                    <input 
+                      type="date" 
+                      value={startDate} 
+                      onChange={e => setStartDate(e.target.value)}
+                      className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    />
+                  </div>
+                </Tooltip>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data Fi</label>
-                <div className="relative">
-                  <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                  <input 
-                    type="date" 
-                    value={endDate} 
-                    onChange={e => setEndDate(e.target.value)}
-                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
-                  />
-                </div>
+                <Tooltip text="Últim dia de l'esdeveniment (deixa-ho igual si és només un dia)">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Data Fi</label>
+                </Tooltip>
+                <Tooltip text="Últim dia de l'esdeveniment (deixa-ho igual si és només un dia)">
+                  <div className="relative">
+                    <Calendar className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                    <input 
+                      type="date" 
+                      value={endDate} 
+                      onChange={e => setEndDate(e.target.value)}
+                      className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    />
+                  </div>
+                </Tooltip>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assumpte del correu</label>
-              <div className="relative">
-                <Type className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                <input 
-                  type="text" 
-                  value={subject} 
-                  onChange={e => setSubject(e.target.value)}
-                  placeholder="Disponibilitat: ..."
-                  className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium"
-                />
-              </div>
+              <Tooltip text="Títol del correu que rebrà el treballador">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assumpte del correu</label>
+              </Tooltip>
+              <Tooltip text="Títol del correu que rebrà el treballador">
+                <div className="relative">
+                  <Type className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="text" 
+                    value={subject} 
+                    onChange={e => setSubject(e.target.value)}
+                    placeholder="Disponibilitat: ..."
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400 font-medium"
+                  />
+                </div>
+              </Tooltip>
             </div>
           </div>
 
           {/* Dades del Treballador */}
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nom Treballador</label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                <input 
-                  type="text" 
-                  list="workers-list"
-                  value={workerName} 
-                  onChange={handleWorkerNameChange}
-                  placeholder="ex: Joan Tècnic"
-                  className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-                />
-                <datalist id="workers-list">
-                  {historyProfiles.map((profile, i) => <option key={i} value={profile.name} />)}
-                </datalist>
-              </div>
+              <Tooltip text="Escriu o selecciona el nom. L'email s'omplirà automàticament si ja el tens guardat.">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom Treballador</label>
+              </Tooltip>
+              <Tooltip text="Escriu o selecciona el nom. L'email s'omplirà automàticament si ja el tens guardat.">
+                <div className="relative">
+                  <User className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                  <input 
+                    type="text" 
+                    list="workers-list"
+                    value={workerName} 
+                    onChange={handleWorkerNameChange}
+                    placeholder="ex: Joan Tècnic"
+                    className="w-full pl-9 p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </div>
+              </Tooltip>
+              <datalist id="workers-list">
+                {historyProfiles.map((profile, i) => <option key={i} value={profile.name} />)}
+              </datalist>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
-              <input 
-                type="email" 
-                value={workerEmail} 
-                onChange={e => setWorkerEmail(e.target.value)}
-                placeholder="ex: joan@gmail.com"
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-              />
+              <Tooltip text="Correu electrònic on s'enviarà la petició">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Treballador</label>
+              </Tooltip>
+              <Tooltip text="Correu electrònic on s'enviarà la petició">
+                <input 
+                  type="email" 
+                  value={workerEmail} 
+                  onChange={e => setWorkerEmail(e.target.value)}
+                  placeholder="ex: joan@gmail.com"
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                />
+              </Tooltip>
             </div>
           </div>
 
-          <button 
-            onClick={handleSend}
-            className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md"
-          >
-            <Send className="w-5 h-5" />
-            Generar i Obrir Correu
-          </button>
+          <Tooltip text="Crea l'esborrany i obre el teu gestor de correu predeterminat">
+            <button 
+              onClick={handleSend}
+              className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md"
+            >
+              <Send className="w-5 h-5" />
+              Generar i Obrir Correu
+            </button>
+          </Tooltip>
 
         </div>
       </div>
