@@ -6,7 +6,7 @@
   "author": "Pep",
   "license": "GPL-3.0-or-later",
   "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
