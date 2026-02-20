@@ -1,0 +1,6 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+export function ImportModal({ isOpen, onClose, onMerge, onReplace, newContactCount }) {
+    if (!isOpen)
+        return null;
+    return (_jsx("div", { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50", children: _jsxs("div", { className: "bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl", children: [_jsx("h2", { className: "text-xl font-bold text-gray-900 mb-4", children: "Importar Contactes" }), _jsxs("p", { className: "text-gray-700 mb-6", children: ["S'han trobat ", newContactCount, " contactes al fitxer. Qu\u00E8 vols fer?"] }), _jsxs("div", { className: "flex flex-col sm:flex-row gap-3", children: [_jsx("button", { onClick: onClose, className: "flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 font-medium", children: "Cancel\u00B7lar" }), _jsx("button", { onClick: onReplace, className: "flex-1 px-4 py-2 text-white bg-orange-500 hover:bg-orange-600 rounded-md transition-colors duration-200 font-medium", children: "Reempla\u00E7ar" }), _jsx("button", { onClick: onMerge, className: "flex-1 px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200 font-medium", children: "Fusionar" })] })] }) }));
+}
