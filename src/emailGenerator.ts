@@ -45,13 +45,44 @@ export const generateMailtoLink = (
   const linkPartial = `mailto:${managerEmail}?subject=${clean(subjectPartial)}&body=${clean(bodyPartial)}`;
 
   // --- COS DEL MISSATGE PRINCIPAL ---
+  const dateTitle = (!endDate || startDate === endDate) ? 'DATA' : 'DATES';
+  
+  // Format per mostrar dates en columna si són múltiples
+  const formatDateList = (start: string, end: string) => {
+    if (!end || start === end) {
+      return start;
+    }
+    
+    // Convertir dates a objecte Date per processar
+    const [startYear, startMonth, startDay] = start.split('-').map(Number);
+    const [endYear, endMonth, endDay] = end.split('-').map(Number);
+    
+    const dates = [];
+    const current = new Date(startYear, startMonth - 1, startDay);
+    const endDateObj = new Date(endYear, endMonth - 1, endDay);
+    
+    while (current <= endDateObj) {
+      const day = current.getDate().toString().padStart(2, '0');
+      const month = (current.getMonth() + 1).toString().padStart(2, '0');
+      dates.push(`${day}/${month}/${startYear}`);
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return dates.join('\n');
+  };
+  
+  const dateDisplay = (!endDate || startDate === endDate) ? startDate : formatDateList(startDate, endDate);
+  
   const body = `
 Hola ${workerName},
 
 Necessito saber la teva disponibilitat per a aquest esdeveniment:
 
 📅 ESDEVENIMENT: ${eventName}
-📆 DATA: ${dateRange}
+📆 ${dateTitle}:
+${dateDisplay}
+
+${endDate && startDate !== endDate ? 'Especifica els dies que pots assistir:' : ''}
 
 Si us plau, respon fent clic a un d'aquests enllaços:
 
