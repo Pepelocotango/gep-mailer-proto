@@ -628,6 +628,7 @@ function App() {
               <Tooltip text="Desa el contacte actual a la llista de contactes importats">
                 <button 
                   onClick={handleUpdateContact}
+                  title="Desa el contacte actual a la llista de contactes importats"
                   className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
                 >
                   <Save className="w-4 h-4" />
@@ -637,6 +638,7 @@ function App() {
               <Tooltip text="Neteja tots els camps del formulari i dessel·lecciona el contacte">
                 <button 
                   onClick={handleClearForm}
+                  title="Neteja tots els camps del formulari i dessel·lecciona el contacte"
                   className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
                 >
                   <User className="w-4 h-4" />
