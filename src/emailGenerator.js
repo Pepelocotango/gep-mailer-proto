@@ -6,30 +6,37 @@ export const formatDateDMY = (dateStr) => {
 };
 export const generateMailtoLink = (managerEmail, workerEmail, workerName, eventName, startDate, endDate, customSubject) => {
     const clean = (text) => encodeURIComponent(text);
-    const deepClean = (text) => encodeURIComponent(encodeURIComponent(text));
-    const stripEmojis = (text) => text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
-    // Noms i esdeveniments nets per als links interns
-    const cleanWorkerName = stripEmojis(workerName);
-    const cleanEventName = stripEmojis(eventName);
-    // --- BOTONS DE RESPOSTA (Nested Mailto amb Double Encoding) ---
-    const subjectYes = `CONFIRMAT: ${cleanEventName}`;
-    const bodyYes = `Confirmo assistencia a: ${cleanEventName}. Signat: ${cleanWorkerName}`;
-    const linkYes = `mailto:${managerEmail}?subject=${deepClean(subjectYes)}&body=${deepClean(bodyYes)}`.trim();
-    const subjectNo = `REBUTJAT: ${cleanEventName}`;
-    const bodyNo = `No tinc disponibilitat per a: ${cleanEventName}. Salutacions, ${cleanWorkerName}`;
-    const linkNo = `mailto:${managerEmail}?subject=${deepClean(subjectNo)}&body=${deepClean(bodyNo)}`.trim();
-    const subjectPending = `PENDENT: ${cleanEventName}`;
-    const bodyPending = `Encara no se la disponibilitat per a: ${cleanEventName}. T'informare aviat.`;
-    const linkPending = `mailto:${managerEmail}?subject=${deepClean(subjectPending)}&body=${deepClean(bodyPending)}`.trim();
-    const subjectPartial = `PARCIAL: ${cleanEventName}`;
-    const bodyPartial = `Puc assistir a ${cleanEventName} nomes aquests dies: `;
-    const linkPartial = `mailto:${managerEmail}?subject=${deepClean(subjectPartial)}&body=${deepClean(bodyPartial)}`.trim();
+    // Helper to format date range
+    const formatDateRange = (start, end) => {
+        const startFmt = formatDateDMY(start);
+        const endFmt = formatDateDMY(end);
+        if (!endFmt || startFmt === endFmt) {
+            return startFmt;
+        }
+        return `${startFmt} fins al ${endFmt}`;
+    };
+    const dateRange = formatDateRange(startDate, endDate);
+    // --- BOTONS DE RESPOSTA ---
+    const subjectYes = `CONFIRMAT: ${eventName} - ${workerName}`;
+    const bodyYes = `Hola,\n\nConfirmo la meva assistència per a l'esdeveniment ${eventName} (${dateRange}).\n\nSalutacions,\n${workerName}`;
+    const linkYes = `mailto:${managerEmail}?subject=${clean(subjectYes)}&body=${clean(bodyYes)}`;
+    const subjectNo = `NO DISPONIBLE: ${eventName} - ${workerName}`;
+    const bodyNo = `Hola,\n\nEm sap greu, però no tinc disponibilitat per a l'esdeveniment ${eventName} (${dateRange}).\n\nSalutacions,\n${workerName}`;
+    const linkNo = `mailto:${managerEmail}?subject=${clean(subjectNo)}&body=${clean(bodyNo)}`;
+    const subjectPending = `PENDENT: ${eventName} - ${workerName}`;
+    const bodyPending = `Hola,\n\nEncara no ho sé segur. T'informaré el més aviat possible.\n\nSalutacions,\n${workerName}`;
+    const linkPending = `mailto:${managerEmail}?subject=${clean(subjectPending)}&body=${clean(bodyPending)}`;
+    const subjectPartial = `DISPONIBILITAT PARCIAL: ${eventName} - ${workerName}`;
+    const bodyPartial = `Hola,\n\nPuc assistir a l'esdeveniment ${eventName}, però només els següents dies:\n\n\n\nSalutacions,\n${workerName}`;
+    const linkPartial = `mailto:${managerEmail}?subject=${clean(subjectPartial)}&body=${clean(bodyPartial)}`;
     // --- COS DEL MISSATGE PRINCIPAL ---
     const dateTitle = (!endDate || startDate === endDate) ? 'DATA' : 'DATES';
+    // Format per mostrar dates en columna si són múltiples
     const formatDateList = (start, end) => {
         if (!end || start === end) {
-            return formatDateDMY(start);
+            return start;
         }
+        // Convertir dates a objecte Date per processar
         const [startYear, startMonth, startDay] = start.split('-').map(Number);
         const [endYear, endMonth, endDay] = end.split('-').map(Number);
         const dates = [];
@@ -41,9 +48,9 @@ export const generateMailtoLink = (managerEmail, workerEmail, workerName, eventN
             dates.push(`${day}/${month}/${startYear}`);
             current.setDate(current.getDate() + 1);
         }
-        return dates.join('\n').trim();
+        return dates.join('\n');
     };
-    const dateDisplay = formatDateList(startDate, endDate);
+    const dateDisplay = (!endDate || startDate === endDate) ? startDate : formatDateList(startDate, endDate);
     const body = `
 Hola ${workerName},
 
@@ -53,17 +60,21 @@ Necessito saber la teva disponibilitat per a aquest esdeveniment:
 📆 ${dateTitle}:
 ${dateDisplay}
 
-Si els enllaços de sota no funcionen, respon directament a aquest correu indicant la teva disponibilitat.
+${endDate && startDate !== endDate ? 'Especifica els dies que pots assistir:' : ''}
 
-Respon clicant una opció:
+Si us plau, respon fent clic a un d'aquests enllaços:
 
-[ SÍ, COMPTA AMB MI ] -> ${linkYes}
+✅ SÍ, COMPTA AMB MI:
+${linkYes}
 
-[ NO PUC ASSISTIR ] -> ${linkNo}
+❌ NO PUC:
+${linkNo}
 
-[ NOMÉS ALGUNS DIES ] -> ${linkPartial}
+🌗 NOMÉS ALGUNS DIES:
+${linkPartial}
 
-[ ENCARA NO HO SÉ ] -> ${linkPending}
+⏳ ENCARA NO HO SÉ:
+${linkPending}
 
 Gràcies!
 `.trim();
