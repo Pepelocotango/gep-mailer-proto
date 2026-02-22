@@ -20,7 +20,7 @@ interface PersonGroup {
   notes?: string;
 }
 
-const REPLY_BASE_URL = import.meta.env.VITE_REPLY_BASE_URL || 'https://TU_USUARI.github.io/gep-mailer-proto/reply.html';
+const REPLY_BASE_URL = import.meta.env.VITE_REPLY_BASE_URL || 'https://Pepelocotango.github.io/gep-mailer-proto/reply.html';
 
 function App() {
   const [managerEmail, setManagerEmail]   = useState(localStorage.getItem('gep_manager_email') || '');
