@@ -28,10 +28,8 @@ export const generateMailtoLink = (
 
   const dateRange = formatDateRange(startDate, endDate);
 
-  const enc = encodeURIComponent;
-
   const buildReplyLink = (type: string) =>
-    `${replyBaseUrl}?to=${enc(managerEmail)}&type=${type}&event=${enc(eventName)}&worker=${enc(workerName)}&date=${enc(dateRange)}`;
+    `${replyBaseUrl}?to=${clean(managerEmail)}&type=${type}&event=${clean(eventName)}&worker=${clean(workerName)}&date=${clean(dateRange)}`;
 
   const linkYes     = buildReplyLink('yes');
   const linkNo      = buildReplyLink('no');
