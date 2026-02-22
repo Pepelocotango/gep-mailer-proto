@@ -11,7 +11,8 @@ export const generateMailtoLink = (
   eventName: string,
   startDate: string,
   endDate: string,
-  customSubject: string
+  customSubject: string,
+  replyBaseUrl: string
 ) => {
   const clean = (text: string) => encodeURIComponent(text);
 
@@ -27,22 +28,15 @@ export const generateMailtoLink = (
 
   const dateRange = formatDateRange(startDate, endDate);
 
-  // --- BOTONS DE RESPOSTA ---
-  const subjectYes = `CONFIRMAT: ${eventName} - ${workerName}`;
-  const bodyYes = `Hola,\n\nConfirmo la meva assistència per a l'esdeveniment ${eventName} (${dateRange}).\n\nSalutacions,\n${workerName}`;
-  const linkYes = `mailto:${managerEmail}?subject=${clean(subjectYes)}&body=${clean(bodyYes)}`;
+  const enc = encodeURIComponent;
 
-  const subjectNo = `NO DISPONIBLE: ${eventName} - ${workerName}`;
-  const bodyNo = `Hola,\n\nEm sap greu, però no tinc disponibilitat per a l'esdeveniment ${eventName} (${dateRange}).\n\nSalutacions,\n${workerName}`;
-  const linkNo = `mailto:${managerEmail}?subject=${clean(subjectNo)}&body=${clean(bodyNo)}`;
+  const buildReplyLink = (type: string) =>
+    `${replyBaseUrl}?to=${enc(managerEmail)}&type=${type}&event=${enc(eventName)}&worker=${enc(workerName)}&date=${enc(dateRange)}`;
 
-  const subjectPending = `PENDENT: ${eventName} - ${workerName}`;
-  const bodyPending = `Hola,\n\nEncara no ho sé segur. T'informaré el més aviat possible.\n\nSalutacions,\n${workerName}`;
-  const linkPending = `mailto:${managerEmail}?subject=${clean(subjectPending)}&body=${clean(bodyPending)}`;
-
-  const subjectPartial = `DISPONIBILITAT PARCIAL: ${eventName} - ${workerName}`;
-  const bodyPartial = `Hola,\n\nPuc assistir a l'esdeveniment ${eventName}, però només els següents dies:\n\n\n\nSalutacions,\n${workerName}`;
-  const linkPartial = `mailto:${managerEmail}?subject=${clean(subjectPartial)}&body=${clean(bodyPartial)}`;
+  const linkYes     = buildReplyLink('yes');
+  const linkNo      = buildReplyLink('no');
+  const linkPartial = buildReplyLink('partial');
+  const linkPending = buildReplyLink('pending');
 
   // --- COS DEL MISSATGE PRINCIPAL ---
   const dateTitle = (!endDate || startDate === endDate) ? 'DATA' : 'DATES';

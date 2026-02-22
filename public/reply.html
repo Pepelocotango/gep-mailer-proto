@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Obrint client de correu...</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f3f4f6;
+      color: #1f2937;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+    }
+    .icon { font-size: 3rem; margin-bottom: 1rem; }
+    h1 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+    p  { font-size: 0.9rem; color: #6b7280; margin: 0 0 1.5rem; }
+    a.btn {
+      display: inline-block;
+      padding: 0.6rem 1.4rem;
+      background: #3b82f6;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    a.btn:hover { background: #2563eb; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">✉️</div>
+    <h1>Obrint el teu client de correu...</h1>
+    <p>Si no s'obre automàticament, fes clic al botó:</p>
+    <a class="btn" id="mailto-btn" href="#">Obrir client de correu</a>
+  </div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+
+      const to      = params.get('to')      || '';
+      const type    = params.get('type')    || '';
+      const event   = params.get('event')   || '';
+      const worker  = params.get('worker')  || '';
+      const date    = params.get('date')    || '';
+
+      const enc = encodeURIComponent;
+
+      let subject = '';
+      let body    = '';
+
+      if (type === 'yes') {
+        subject = `CONFIRMAT: ${event} - ${worker}`;
+        body    = `Hola,\n\nConfirmo la meva assistència per a l'esdeveniment ${event} (${date}).\n\nSalutacions,\n${worker}`;
+      } else if (type === 'no') {
+        subject = `NO DISPONIBLE: ${event} - ${worker}`;
+        body    = `Hola,\n\nEm sap greu, però no tinc disponibilitat per a l'esdeveniment ${event} (${date}).\n\nSalutacions,\n${worker}`;
+      } else if (type === 'partial') {
+        subject = `DISPONIBILITAT PARCIAL: ${event} - ${worker}`;
+        body    = `Hola,\n\nPuc assistir a l'esdeveniment ${event}, però només els següents dies:\n\n\n\nSalutacions,\n${worker}`;
+      } else if (type === 'pending') {
+        subject = `PENDENT: ${event} - ${worker}`;
+        body    = `Hola,\n\nEncara no ho sé segur. T'informaré el més aviat possible.\n\nSalutacions,\n${worker}`;
+      }
+
+      const mailtoUrl = `mailto:${to}?subject=${enc(subject)}&body=${enc(body)}`;
+
+      const btn = document.getElementById('mailto-btn');
+      btn.href = mailtoUrl;
+
+      // Redirecció automàtica
+      window.location.href = mailtoUrl;
+    })();
+  </script>
+</body>
+</html>
