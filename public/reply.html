@@ -38,14 +38,206 @@
       font-size: 0.9rem;
     }
     a.btn:hover { background: #2563eb; }
+    hr { margin: 1.5rem 0; }
+    .help { text-align: left; }
+    .help-title { 
+      font-weight: bold; 
+      color: #374151; 
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .help-text { 
+      font-size: 0.85rem; 
+      color: #6b7280; 
+      margin-bottom: 1rem; 
+    }
+    .help-block { 
+      background: #f9fafb; 
+      border: 1px solid #e5e7eb;
+      border-radius: 8px; 
+      padding: 1rem; 
+      margin-bottom: 1rem; 
+    }
+    .browser-label { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      margin-bottom: 0.5rem; 
+    }
+    ol { 
+      margin: 0; 
+      padding-left: 1.2rem; 
+      font-size: 0.85rem; 
+      color: #374151; 
+    }
+    ol li { margin-bottom: 0.3rem; }
+    .tip { 
+      margin-top: 0.75rem; 
+      font-size: 0.8rem; 
+      color: #6b7280; 
+      background: #fffbeb; 
+      border: 1px solid #fde68a;
+      border-radius: 6px; 
+      padding: 0.5rem 0.75rem; 
+    }
+    a { color: #3b82f6; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="icon">✉️</div>
     <h1>Obrint el teu client de correu...</h1>
-    <p>Si no s'obre automàticament, fes clic al botó:</p>
+    <p>Fes clic al botó per respondre amb el teu gestor de correu:</p>
     <a class="btn" id="mailto-btn" href="#">Obrir client de correu</a>
+
+    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;" />
+
+    <div class="help">
+      <p class="help-title">⚙️ Si el botó no funciona</p>
+      <p class="help-text">
+        Si uses <strong>Gmail al navegador</strong>, pots activar-lo com a gestor de correu 
+        una sola vegada i el botó funcionarà sempre.
+      </p>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="Chrome" />
+          <strong>Chrome</strong>
+        </div>
+        <ol>
+          <li>Obre <a href="https://gmail.com" target="_blank">gmail.com</a></li>
+          <li>Busca a la barra d'adreces, a la dreta, la icona dels <strong>dos rombos ◈</strong> (o un rombe simple ◇)</li>
+          <li>Clica-la → selecciona <em>"Permet que gmail.com gestioni els links de correu (mailto)"</em></li>
+          <li>Clica <strong>Permet</strong></li>
+        </ol>
+        <div class="tip">
+          💡 Si no veus la icona, busca la icona de <strong>sliders ⊞</strong> o un <strong>cercle amb una i</strong> 🛈 a l'esquerra de la URL
+        </div>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <img src="https://www.mozilla.org/favicon.ico" width="16" height="16" alt="Firefox" />
+          <strong>Firefox</strong>
+        </div>
+        <ol>
+          <li>Obre <a href="https://gmail.com" target="_blank">gmail.com</a></li>
+          <li>Firefox mostrarà automàticament una notificació a la part superior</li>
+          <li>Selecciona <em>"Utilitza Gmail"</em> i clica <strong>Permet</strong></li>
+        </ol>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <strong>🧭 Safari (Mac)</strong>
+        </div>
+        <ol>
+          <li>Obre el menú <strong>Safari → Preferències → General</strong></li>
+          <li>A "App de correu predeterminada", selecciona <strong>Gmail</strong> (si apareix) o <strong>Apple Mail</strong></li>
+          <li>Si no apareix Gmail, necessitaràs instal·lar l'extensió <a href="https://apps.apple.com/app/mailto-gmail/id1534924022" target="_blank">Mailto: Gmail</a> de l'App Store</li>
+        </ol>
+        <div class="tip">
+          💡 Safari és el navegador més restrictiu amb mailto: — Apple Mail com a predeterminat és la solució més senzilla
+        </div>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <img src="https://www.microsoft.com/favicon.ico" width="16" height="16" alt="Edge" />
+          <strong>Edge</strong>
+        </div>
+        <ol>
+          <li>Obre <a href="https://gmail.com" target="_blank">gmail.com</a></li>
+          <li>A la barra d'adreces, clica la icona de <strong>permisos del lloc</strong> 🔒 (a l'esquerra de la URL)</li>
+          <li>Busca <em>"Gestors de protocols"</em> → activa Gmail per a mailto</li>
+          <li>O ves a <strong>Configuració Edge → Cookies i permisos → Gestors de protocols</strong></li>
+        </ol>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <strong>📱 Mòbil (Android / iPhone)</strong>
+        </div>
+        <ol>
+          <li>Al mòbil el botó obre directament l'app de correu predeterminada</li>
+          <li>Si no funciona, comprova que tens una app de correu instal·lada (Gmail, Outlook...)</li>
+          <li>A <strong>Android</strong>: Configuració → Apps → Apps predeterminades → App de correu</li>
+          <li>A <strong>iPhone</strong>: Configuració → Mail → App de correu predeterminada</li>
+        </ol>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <strong>🦁 Brave</strong>
+        </div>
+        <ol>
+          <li>Obre <a href="https://gmail.com" target="_blank">gmail.com</a></li>
+          <li>A la barra d'adreces, clica la icona del <strong>lleó</strong> o els <strong>sliders ⊞</strong></li>
+          <li>Funciona igual que Chrome — busca <em>"Gestors de protocols"</em> i permet Gmail per a mailto</li>
+        </ol>
+        <div class="tip">
+          💡 Brave és basat en Chrome — les instruccions de Chrome funcionen aquí
+        </div>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <strong>🦆 DuckDuckGo</strong>
+        </div>
+        <ol>
+          <li>DuckDuckGo (mòbil) no suporta gestors de mailto personalitzats</li>
+          <li>Obre el link amb Chrome o Safari i segueix les instruccions d'aquell navegador</li>
+        </ol>
+        <div class="tip">
+          💡 DuckDuckGo al mòbil és molt restrictiu — recomanem usar Chrome o Firefox per a aquesta acció
+        </div>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <strong>🦊 LibreWolf</strong>
+        </div>
+        <ol>
+          <li>Obre <a href="https://gmail.com" target="_blank">gmail.com</a></li>
+          <li>LibreWolf és basat en Firefox però amb privacitat reforçada — pot bloquejar els gestors de protocols per defecte</li>
+          <li>Ves a <strong>about:config</strong> → busca <code>network.protocol-handler.expose.mailto</code> → posa-ho a <strong>false</strong></li>
+          <li>Reinicia el navegador i torna a <a href="https://gmail.com" target="_blank">gmail.com</a> — ara hauria d'aparèixer la notificació</li>
+        </ol>
+        <div class="tip">
+          💡 LibreWolf és el navegador més restrictiu d'aquesta llista — si tens problemes, Firefox és l'alternativa més compatible
+        </div>
+      </div>
+
+      <div class="help-block">
+        <div class="browser-label">
+          <strong>🌊 Vivaldi / Opera / Arc</strong>
+        </div>
+        <ol>
+          <li>Tots estan basats en Chrome — segueix les instruccions de <strong>Chrome</strong> de dalt</li>
+          <li>La icona pot variar però la configuració de gestors de protocols és la mateixa</li>
+        </ol>
+      </div>
+
+      <p class="help-text" style="margin-top:1rem;">
+        Un cop fet, torna aquí i clica el botó de dalt. ✅
+      </p>
+
+      <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;" />
+
+      <div class="help-block" style="background: #fef2f2; border-color: #fecaca;">
+        <div class="browser-label">
+          <strong>📧 Si res no funciona — resposta manual</strong>
+        </div>
+        <p style="font-size: 0.85rem; color: #374151; margin: 0 0 0.75rem;">
+          Obre el teu correu i envia un missatge nou amb aquestes dades:
+        </p>
+        <div id="manual-info" style="background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 0.75rem; font-size: 0.85rem; color: #374151;">
+          <p style="margin: 0 0 0.3rem;"><strong>Per a:</strong> <span id="manual-to"></span></p>
+          <p style="margin: 0 0 0.3rem;"><strong>Assumpte:</strong> <span id="manual-subject"></span></p>
+          <p style="margin: 0;"><strong>Cos:</strong> <span id="manual-body"></span></p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -76,6 +268,12 @@
         subject = `PENDENT: ${event} - ${worker}`;
         body    = `Hola,\n\nEncara no ho sé segur. T'informaré el més aviat possible.\n\nSalutacions,\n${worker}`;
       }
+
+      // Emplena la info per a resposta manual
+      document.getElementById('manual-to').textContent = to;
+      document.getElementById('manual-subject').textContent = subject;
+      document.getElementById('manual-body').textContent = 
+        body.replace(/\\n/g, ' · ');
 
       const mailtoUrl = `mailto:${to}?subject=${enc(subject)}&body=${enc(body)}`;
 
