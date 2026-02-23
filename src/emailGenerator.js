@@ -54,7 +54,7 @@ ${dateDisplay}
 
 ${endDate && startDate !== endDate ? 'Especifica els dies que pots assistir:' : ''}
 
-Si us plau, respon fent clic a un d'aquests enllaços:
+Pots responde a aquest mail de manera tradicional o de manera automàtica des d'aquests enllaços:
 
 ✅ SÍ, COMPTA AMB MI:
 ${linkYes}
