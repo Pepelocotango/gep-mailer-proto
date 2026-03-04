@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { generateMailtoLink, formatDateDMY } from './emailGenerator';
+import { generateMailtoLink } from './emailGenerator';
 import { Send, User, Calendar, Mail, Type, Upload, Search, Download, Phone, Save, Globe, FileText, X } from 'lucide-react';
 import { Tooltip } from './components/Tooltip';
 import { ImportModal } from './components/ImportModal';
@@ -263,15 +263,56 @@ function App() {
   };
 
   useEffect(() => {
-    const firstEvent = events[0];
-    if (firstEvent && (firstEvent.eventName || firstEvent.startDate)) {
-      const sf = formatDateDMY(firstEvent.startDate);
-      const ef = formatDateDMY(firstEvent.endDate);
-      const dp = ef && ef !== sf ? `${sf} - ${ef}` : sf;
-      setSubject(`Disponibilitat: ${firstEvent.eventName} ${dp ? `(${dp})` : ''}`);
-    } else {
+    // Filtrar events con nombre o fecha de inicio
+    const validEvents = events.filter(e => e.eventName || e.startDate);
+    
+    if (validEvents.length === 0) {
       setSubject('');
+      return;
     }
+
+    // Función para formatear fecha a DD/MM/YYYY
+    const formatDate = (dateStr: string): string => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    // Función para formatear rango de fechas
+    const formatDateRange = (startDate: string, endDate: string): string => {
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+      
+      if (!start) return '';
+      
+      // Si no hay fecha de fin o es igual a la de inicio, mostrar solo una fecha
+      if (!end || start === end) {
+        return `(${start})`;
+      }
+      
+      return `(${start} - ${end})`;
+    };
+
+    let newSubject = 'Previsió de Personal: ';
+
+    if (validEvents.length === 1) {
+      // Un solo event: mostrar nombre y rango de fechas
+      const event = validEvents[0];
+      const dateRange = formatDateRange(event.startDate, event.endDate);
+      newSubject += event.eventName ? `${event.eventName} ${dateRange}` : dateRange;
+    } else {
+      // Múltiples events: mostrar solo rangos de fechas
+      const dateRanges = validEvents
+        .map(event => formatDateRange(event.startDate, event.endDate))
+        .filter(range => range); // Filtrar rangos vacíos
+      newSubject += dateRanges.join(' ');
+    }
+
+    setSubject(newSubject);
   }, [events, setSubject]);
 
   const filteredContacts = contacts.filter(c =>
