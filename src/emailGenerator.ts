@@ -83,7 +83,7 @@ Necessito saber la teva disponibilitat per als següents esdeveniments:
 
 ${eventsBlock}
 
-Si us plau, respon fent clic a un d'aquests enllaços:
+Pots respondre a aquest mail de la manera tradicional o fent clic a un d'aquests enllaços:
 
 ✅ SÍ, COMPTA AMB MI:
 ${linkYes}
