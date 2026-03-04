@@ -20,14 +20,21 @@ interface PersonGroup {
   notes?: string;
 }
 
+interface EventEntry {
+  id: string;
+  eventName: string;
+  startDate: string;
+  endDate: string;
+}
+
 const REPLY_BASE_URL = import.meta.env.VITE_REPLY_BASE_URL || 'https://Pepelocotango.github.io/gep-mailer-proto/reply.html';
 
 function App() {
   const [managerEmail, setManagerEmail]   = useState(localStorage.getItem('gep_manager_email') || '');
   const [subject, setSubject]             = useState('');
-  const [eventName, setEventName]         = useState('');
-  const [startDate, setStartDate]         = useState('');
-  const [endDate, setEndDate]             = useState('');
+  const [events, setEvents]               = useState<EventEntry[]>([
+    { id: crypto.randomUUID(), eventName: '', startDate: '', endDate: '' }
+  ]);
   const [workerName, setWorkerName]       = useState('');
   const [workerEmail, setWorkerEmail]     = useState('');
   const [workerRole, setWorkerRole]       = useState('');
@@ -46,6 +53,20 @@ function App() {
   const [historyEvents, setHistoryEvents]     = useState<string[]>(JSON.parse(localStorage.getItem('gep_history_events') || '[]'));
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Gestió d'events ───────────────────────────────────────────────────────
+  const addEvent = () => {
+    setEvents(prev => [...prev, { id: crypto.randomUUID(), eventName: '', startDate: '', endDate: '' }]);
+  };
+
+  const removeEvent = (id: string) => {
+    if (events.length === 1) return; // mínim un event
+    setEvents(prev => prev.filter(e => e.id !== id));
+  };
+
+  const updateEvent = (id: string, field: keyof Omit<EventEntry, 'id'>, value: string) => {
+    setEvents(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+  };
 
   // ── Parsers ──────────────────────────────────────────────────────────────
   const parseCSV = (text: string): PersonGroup[] => {
@@ -204,6 +225,14 @@ function App() {
 
   const handleSend = () => {
     if (!workerEmail || !managerEmail) { alert("Cal omplir el teu email i l'email del treballador."); return; }
+    
+    // Validar que tots els events tinguin nom i data d'inici
+    const hasInvalidEvent = events.some(e => !e.eventName || !e.startDate);
+    if (hasInvalidEvent) {
+      alert('Tots els esdeveniments han de tenir nom i data d\'inici.');
+      return;
+    }
+
     localStorage.setItem('gep_manager_email', managerEmail);
     if (workerName && workerEmail) {
       const np = { name: workerName, email: workerEmail };
@@ -215,12 +244,15 @@ function App() {
       setHistoryProfiles(limited);
       localStorage.setItem('gep_history_profiles', JSON.stringify(limited));
     }
-    if (eventName) {
-      const evs = Array.from(new Set([eventName, ...historyEvents])).slice(0, 10);
+    
+    // Afegir al historial els segons el primer event
+    if (events[0]?.eventName) {
+      const evs = Array.from(new Set([events[0].eventName, ...historyEvents])).slice(0, 10);
       setHistoryEvents(evs);
       localStorage.setItem('gep_history_events', JSON.stringify(evs));
     }
-    window.location.href = generateMailtoLink(managerEmail, workerEmail, workerName, eventName, startDate, endDate, subject, REPLY_BASE_URL);
+    
+    window.location.href = generateMailtoLink(managerEmail, workerEmail, workerName, events, subject, REPLY_BASE_URL);
   };
 
   const handleWorkerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,15 +263,16 @@ function App() {
   };
 
   useEffect(() => {
-    if (eventName || startDate) {
-      const sf = formatDateDMY(startDate);
-      const ef = formatDateDMY(endDate);
+    const firstEvent = events[0];
+    if (firstEvent && (firstEvent.eventName || firstEvent.startDate)) {
+      const sf = formatDateDMY(firstEvent.startDate);
+      const ef = formatDateDMY(firstEvent.endDate);
       const dp = ef && ef !== sf ? `${sf} - ${ef}` : sf;
-      setSubject(`Disponibilitat: ${eventName} ${dp ? `(${dp})` : ''}`);
+      setSubject(`Disponibilitat: ${firstEvent.eventName} ${dp ? `(${dp})` : ''}`);
     } else {
       setSubject('');
     }
-  }, [eventName, startDate, endDate, setSubject]);
+  }, [events, setSubject]);
 
   const filteredContacts = contacts.filter(c =>
     c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
@@ -324,50 +357,94 @@ function App() {
             </Tooltip>
           </div>
 
-          {/* Esdeveniment */}
+          {/* Esdeveniment(s) */}
           <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Esdeveniment</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Esdeveniments</p>
 
-            {/* Nom + Data Inici + Data Fi en una fila */}
-            <div className="grid grid-cols-5 gap-2 mb-2">
-              <div className="col-span-3">
-                <label className={labelCls}>Nom de l'Esdeveniment</label>
-                <Tooltip text="Nom de l'esdeveniment o bolo">
-                  <input
-                    type="text"
-                    list="events-list"
-                    value={eventName}
-                    onChange={e => setEventName(e.target.value)}
-                    placeholder="ex: Concert Festa Major"
-                    className={inputCls}
-                  />
-                </Tooltip>
-                <datalist id="events-list">
-                  {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
-                </datalist>
-              </div>
-              <div className="col-span-1">
-                <label className={labelCls}>Data Inici</label>
-                <Tooltip text="Primer dia de l'esdeveniment">
-                  <div className="relative">
-                    <Calendar className={iconCls} />
-                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputIconCls + " text-gray-700"} />
+            <div className="space-y-3">
+              {events.map((event, index) => (
+                <div key={event.id} className="p-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                      Esdeveniment {events.length > 1 ? index + 1 : ''}
+                    </p>
+                    {events.length > 1 && (
+                      <Tooltip text="Eliminar aquest esdeveniment">
+                        <button
+                          onClick={() => removeEvent(event.id)}
+                          className="text-red-400 hover:text-red-600 text-xs"
+                        >
+                          ✕ Eliminar
+                        </button>
+                      </Tooltip>
+                    )}
                   </div>
-                </Tooltip>
-              </div>
-              <div className="col-span-1">
-                <label className={labelCls}>Data Fi</label>
-                <Tooltip text="Últim dia (deixa-ho igual si és un sol dia)">
-                  <div className="relative">
-                    <Calendar className={iconCls} />
-                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={inputIconCls + " text-gray-700"} />
+                  <div className="grid grid-cols-4 gap-2">
+                    {/* Camp nom - ocupa 2 columnes */}
+                    <div className="col-span-2">
+                      <label className={labelCls}>Nom de l'esdeveniment</label>
+                      <Tooltip text="Nom de l'esdeveniment">
+                        <input
+                          list="events-list"
+                          type="text"
+                          value={event.eventName}
+                          onChange={e => updateEvent(event.id, 'eventName', e.target.value)}
+                          placeholder="ex: Concert Festa Major"
+                          className={inputCls}
+                        />
+                      </Tooltip>
+                    </div>
+                    {/* Data Inici */}
+                    <div className="col-span-1">
+                      <label className={labelCls}>Data inici</label>
+                      <Tooltip text="Primer dia de l'esdeveniment">
+                        <div className="relative">
+                          <Calendar className={iconCls} />
+                          <input
+                            type="date"
+                            value={event.startDate}
+                            onChange={e => updateEvent(event.id, 'startDate', e.target.value)}
+                            className={inputIconCls + " text-gray-700"}
+                          />
+                        </div>
+                      </Tooltip>
+                    </div>
+                    {/* Data Fi */}
+                    <div className="col-span-1">
+                      <label className={labelCls}>Data fi</label>
+                      <Tooltip text="Últim dia de l'esdeveniment (deixa-ho igual si és un sol dia)">
+                        <div className="relative">
+                          <Calendar className={iconCls} />
+                          <input
+                            type="date"
+                            value={event.endDate}
+                            onChange={e => updateEvent(event.id, 'endDate', e.target.value)}
+                            className={inputIconCls + " text-gray-700"}
+                          />
+                        </div>
+                      </Tooltip>
+                    </div>
                   </div>
-                </Tooltip>
-              </div>
+                </div>
+              ))}
+
+              {/* Botó afegir esdeveniment */}
+              <Tooltip text="Afegeix un altre esdeveniment al correu">
+                <button
+                  onClick={addEvent}
+                  className="w-full py-1.5 text-sm border-2 border-dashed border-gray-300 rounded-lg text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
+                >
+                  + Afegir altre esdeveniment
+                </button>
+              </Tooltip>
             </div>
 
+            <datalist id="events-list">
+              {historyEvents.map((ev, i) => <option key={i} value={ev} />)}
+            </datalist>
+
             {/* Assumpte */}
-            <div>
+            <div className="mt-3">
               <label className={labelCls}>Assumpte del correu</label>
               <Tooltip text="Títol del correu que rebrà el treballador">
                 <div className="relative">

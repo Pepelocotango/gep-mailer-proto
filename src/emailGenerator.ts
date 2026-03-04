@@ -4,13 +4,18 @@ export const formatDateDMY = (dateStr: string) => {
   return `${d}/${m}/${y}`;
 };
 
+interface EventEntry {
+  id: string;
+  eventName: string;
+  startDate: string;
+  endDate: string;
+}
+
 export const generateMailtoLink = (
   managerEmail: string,
   workerEmail: string,
   workerName: string,
-  eventName: string,
-  startDate: string,
-  endDate: string,
+  events: EventEntry[],
   customSubject: string,
   replyBaseUrl: string
 ) => {
@@ -26,20 +31,7 @@ export const generateMailtoLink = (
     return `${startFmt} fins al ${endFmt}`;
   };
 
-  const dateRange = formatDateRange(startDate, endDate);
-
-  const buildReplyLink = (type: string) =>
-    `${replyBaseUrl}?to=${clean(managerEmail)}&type=${type}&event=${clean(eventName)}&worker=${clean(workerName)}&date=${clean(dateRange)}`;
-
-  const linkYes     = buildReplyLink('yes');
-  const linkNo      = buildReplyLink('no');
-  const linkPartial = buildReplyLink('partial');
-  const linkPending = buildReplyLink('pending');
-
-  // --- COS DEL MISSATGE PRINCIPAL ---
-  const dateTitle = (!endDate || startDate === endDate) ? 'DATA' : 'DATES';
-  
-  // Format per mostrar dates en columna si són múltiples
+  // Helper per generar des de les dates
   const formatDateList = (start: string, end: string) => {
     if (!end || start === end) {
       return start;
@@ -62,19 +54,34 @@ export const generateMailtoLink = (
     
     return dates.join('\n');
   };
-  
-  const dateDisplay = (!endDate || startDate === endDate) ? startDate : formatDateList(startDate, endDate);
-  
+
+  // Per als links de resposta usem tots els events concatenats
+  const allEventNames = events.map(e => e.eventName).join(', ');
+  const allDates = events.map(e => formatDateRange(e.startDate, e.endDate)).join(', ');
+
+  const buildReplyLink = (type: string) =>
+    `${replyBaseUrl}?to=${clean(managerEmail)}&type=${type}&event=${clean(allEventNames)}&worker=${clean(workerName)}&date=${clean(allDates)}`;
+
+  const linkYes     = buildReplyLink('yes');
+  const linkNo      = buildReplyLink('no');
+  const linkPartial = buildReplyLink('partial');
+  const linkPending = buildReplyLink('pending');
+
+  // Generació del bloc d'events per al cos del correu
+  const eventsBlock = events.map(event => {
+    const dateTitle = (!event.endDate || event.startDate === event.endDate) ? 'DATA' : 'DATES';
+    const dateDisplay = (!event.endDate || event.startDate === event.endDate)
+      ? formatDateDMY(event.startDate)
+      : formatDateList(event.startDate, event.endDate);
+    return `📅 ESDEVENIMENT: ${event.eventName}\n📆 ${dateTitle}:\n${dateDisplay}`;
+  }).join('\n\n');
+
   const body = `
 Hola ${workerName},
 
-Necessito saber la teva disponibilitat per a aquest esdeveniment:
+Necessito saber la teva disponibilitat per als següents esdeveniments:
 
-📅 ESDEVENIMENT: ${eventName}
-📆 ${dateTitle}:
-${dateDisplay}
-
-${endDate && startDate !== endDate ? 'Especifica els dies que pots assistir:' : ''}
+${eventsBlock}
 
 Si us plau, respon fent clic a un d'aquests enllaços:
 
