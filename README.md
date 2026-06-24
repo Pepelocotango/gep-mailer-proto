@@ -1,3 +1,7 @@
+# Autor
+
+Pëp pepelocotango@gmail.com
+
 # GEP-MAILER v1.0.0
 
 Aplicació auxiliar de l'ecosistema GEP dissenyada per agilitzar la comunicació amb el personal tècnic.
@@ -87,3 +91,7 @@ Per a informes d'errors, sol·licituds de funcions o contribucions, si us plau u
 ---
 
 **GEP-MAILER** - Part de l'ecosistema GEP per a una gestió eficient del personal tècnic.
+
+## Llicència
+
+Aquest projecte està llicenciat sota la llicència **GNU General Public License v3.0**. Consulta el fitxer [LICENSE](LICENSE) per obtenir més detalls.
